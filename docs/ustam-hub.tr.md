@@ -4,6 +4,23 @@ Ustam’ı aç → Uygulamaları seç → Projeleri ekle → Değişiklikleri in
 
 Ustam, Codex, Claude Code ve OpenCode için tek yerel tarayıcı hub’ıdır. Kullanacağınız uygulamaları seçin, proje klasörlerini ekleyin; projenin ayar alanında orkestra seçin veya oluşturun. Orkestra kaydetmek yeniden kullanılabilir ayarları kaydeder; sağlayıcı görevi başlatmaz. Proje ayarlarını uygulamadan önce önerilen değişiklikleri kontrol edin.
 
+## İş türüne göre hazır ekipler
+
+Hazır ekipten önce iş türünü seçin. Her önerilen ekip keşif, uygulama, doğrulama ve inceleme rollerini içerir; bunlar şefe ek yardımcılardır.
+
+| İş | Ek uzman | Codex / Claude yardımcı | OpenCode yardımcı |
+| --- | --- | --- | --- |
+| Hata düzeltme | Hata analisti | 5 | 4 |
+| Özellik ekleme | — | 4 | 4 |
+| Web | QA operatörü | 5 | 4 |
+| Oyun | Araştırmacı, QA operatörü | 6 | 4 |
+| Backend | Danışman | 5 | 4 |
+| Araştırma | Araştırmacı | 5 | 4 |
+| Veri | Araştırmacı | 5 | 4 |
+| Güvenlik | Araştırmacı, danışman | 6 | 4 |
+
+Öneriler seçilen sağlayıcının kataloğundaki desteklenen rolleri ve modelleri kullanır. Desteklenmeyen uzman sayıyı azaltabilir; eksik modeller kaydetmeden önce tamamlanmalıdır. Ekibi düzenleyebilirsiniz; iş türünü değiştirmek düzenlemelerinizi sessizce ezmez. Sayılar hazırlanan ayarları anlatır; her yardımcının aynı anda çalışacağını garanti etmez. OpenCode şu anda desteklenen dört yürütme rolünü görevlendirir; hub yardımcıları sırayla çalıştırır.
+
 ## Yerel paket kurulumu
 
 Windows/Linux: beta.2 sürümündeki yerel ZIP’i tamamen çıkarın, **Ustam.exe** veya **Ustam** açın. Çıkarılan dosyaları birlikte tutun. Çalışma zamanı pakete dahildir; yerel paket için ayrıca Python gerekmez. Yerel derlenen Mac uygulaması tek başına taşınabilir.

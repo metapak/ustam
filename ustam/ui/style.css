@@ -14,3 +14,5 @@
 .inline-orchestra-choice .choice-context{flex-wrap:nowrap;gap:10px}.inline-orchestra-choice .choice-context>.field{width:auto;flex:0 1 150px;min-width:110px;font-size:10px;gap:3px}.choice-context>.field select{min-height:34px;padding:6px 8px}.choice-context>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.team-character,.selected-team-control{scroll-margin-top:170px}.inline-team-preview{scroll-margin-top:150px}
 
 .flow-steps li.done{color:#3e7352}.flow-steps li.done:before{content:"✓";background:#e9f0e7;color:#3e7352}.result .actions{margin-top:14px}.notice>.path{margin:0;font-size:12px}.notice:has(>.path){flex-wrap:wrap}
+
+.choice-task-controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:14px 0}.choice-task-controls>.field{flex:1;max-width:340px}.team-working-facts{padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:#f6efe3}.choice-ready .badge{line-height:1.5}.task-purpose{font-size:12px}@media(max-width:720px){.choice-task-controls>.field{max-width:none;width:100%}.choice-task-controls{align-items:stretch}.choice-task-controls>.button{width:100%}}

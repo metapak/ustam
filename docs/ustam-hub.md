@@ -4,6 +4,23 @@ Open Ustam → Select apps → Add projects → Review changes.
 
 Ustam is one local browser hub for Codex, Claude Code and OpenCode. Select the apps you use, add project folders, then choose or create an orchestra in that project's setup area. Saving an orchestra saves reusable configuration; it does not start a provider job. Check the proposed project changes before applying them.
 
+## Ready teams by work type
+
+Choose the work type before a ready team. Every suggested team includes exploration, implementation, verification and review; these are helpers in addition to the chief.
+
+| Work | Added specialist | Codex / Claude helpers | OpenCode helpers |
+| --- | --- | --- | --- |
+| Fix a bug | Failure analyst | 5 | 4 |
+| Add a feature | — | 4 | 4 |
+| Web | QA operator | 5 | 4 |
+| Game | Researcher, QA operator | 6 | 4 |
+| Backend | Advisor | 5 | 4 |
+| Research | Researcher | 5 | 4 |
+| Data | Researcher | 5 | 4 |
+| Security | Researcher, advisor | 6 | 4 |
+
+Suggestions use supported roles and models from the selected provider's catalog. An unavailable specialist can reduce the count; missing models require completion before saving. You can edit the team, and changing the work type does not silently overwrite your edits. These counts describe prepared configuration, not a promise that every helper runs simultaneously. OpenCode currently dispatches its four supported execution roles; the hub runs helpers one at a time.
+
 ## Native installation
 
 Windows/Linux: extract the complete native ZIP from the beta.2 release, then open **Ustam.exe** or **Ustam**. Keep the extracted files together. The runtime is bundled; Python is not a separate requirement for native packages. The native Mac app is self-contained when built locally.

@@ -10,7 +10,9 @@ and screenshots captured from the current local console.
 | `preferences-en.png`, `preferences-tr.png` | 1600 × 2296 (EN), 1600 × 2300 (TR) | Current planned-team console with chief settings selected |
 | `console-en.png`, `console-tr.png` | 1600 × 2039 (EN), 1600 × 2055 (TR) | Current Usage orchestra, recorded models and token shares |
 | `ustam-poster-en.png`, `ustam-poster-tr.png` | 1920 × 1080 | Language-specific video posters |
-| `ustam-promo-en-40s.mp4`, `ustam-promo-tr-40s.mp4` | 1920 × 1080, 40 seconds | Language-specific Ustam introductions with music |
+| `ustam-promo-en-40s.mp4`, `ustam-promo-tr-40s.mp4` | 1920 × 1080, 40 seconds | Legacy console introductions with music |
+| `ustam-current-poster-tr.png` | 1920 × 1080 | Current Turkish hub video poster |
+| `ustam-current-usage-tr-65s.mp4` | 1920 × 1080, 65 seconds | Current Turkish hub walkthrough with music |
 
 The illustrations reuse this repository's original orchestra character art.
 Each SVG embeds its own symbols and gradients; it has no external images,
@@ -41,7 +43,9 @@ The example model selection reflects the local catalogue at capture time;
 it does not promise account access. Token values are sample historical
 records. The promotional videos use illustrative sample data.
 
-Each README links its matching poster to the MP4 on raw.githubusercontent.com.
+The Turkish README links the current hub poster to its 65-second Turkish MP4.
+The legacy console guides retain their matching 40-second introductions.
+Poster links use raw.githubusercontent.com.
 This opens the original playable/downloadable asset even when GitHub does not
 render a video preview. Superseded preview media and the unused old role diagram
 were removed so the current asset collection uses the Ustam name.

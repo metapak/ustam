@@ -18,6 +18,12 @@ Ekibi kurun, değişiklikleri kontrol edin ve geçmiş kullanımı görün. Şef
 > [!NOTE]
 > Bu bağımsız bir topluluk projesidir. OpenAI ile bağlantılı değildir ve OpenAI tarafından onaylanmamıştır.
 
+## Güncel Türkçe tanıtım
+
+[![Ustam’ın güncel kullanımını izleyin](docs/assets/ustam-current-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-current-usage-tr-65s.mp4)
+
+[Türkçe videoyu oynatın veya indirin (MP4)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-current-usage-tr-65s.mp4). 65 saniyelik tanıtım; iş türüne göre hazır ekipleri, orkestra düzenlemeyi, yardımcı ve model seçimini, proje kurulumunu ve geçmiş kullanımı gösterir. Kullanım rakamları örnek veridir. GitHub satır içinde oynatıcı göstermezse postere veya MP4 bağlantısına tıklayın.
+
 ## Dört adımda kurulum
 
 **Mac durumu:** Yayımlanan beta.1/beta.2 Mac indirmelerinde ilk açılış sorunu çözülmüş değildir. Yerelde derlenen uygulama bir Mac üzerinde doğrulandı; bu, herkese açık indirmenin açıldığını kanıtlamaz. beta.3 yayımlanmadı. [Mac notlarına bakın](docs/ustam-hub.tr.md).

@@ -40,7 +40,7 @@
       }
     },
     "codex": {
-      "commit": "678e2b0fb508536e46f169cad694bd717ebc058b",
+      "commit": "3904f7aac041d70f364f9ce8a1eae671b0ad94c1",
       "files": {
         ".agents/skills/bounded-orchestrator-security-review/SKILL.md": "0c66ee5160b05d33d64857e4cf9e4a0e149938706fb8cd6e95f8bb08d1e48d8b",
         ".agents/skills/bounded-orchestrator-ui-design/SKILL.md": "7dfc170ca65ccbba4d477903232d14533842ceaf0b941d516dec7abbd24c3441",
@@ -66,14 +66,14 @@
         ".codex/tools/deepseek_mcp.py": "c7019d36d79388b5e362a0338a0c513a1878e8345b5ab20534bf4759f6596f04",
         ".codex/tools/ledger.py": "d271176ea9e0e00ec78568d0e56fcfb7d1c579c66b54ba69af5d805890173bfb",
         ".codex/tools/local_eval.py": "aedaad5172b746257c88afcf3ec797614e2a988a07b5fa55e440141aacdb9625",
-        ".codex/tools/usage_report.py": "d7f45b703f3ac3793bb719d4a5766ac50bcaf5b386a0a1226f03a371fd8d871b",
+        ".codex/tools/usage_report.py": "8381925ad96108f1a4a99d6ae79f3795d443e24b52b23424498e38ce8f187ea2",
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "346a6b91dc15e79a09702e7adb693456fd150bfeaf8c4409d88ad059980a4dcf",
         "VERSION": "97a5d6e540a6120d09c39ddb667e0e8e2bac7fcc2ffef813b82e08fd60365bce",
         "presets/sol-owner.config.toml": "452b0ca8440c8684870a9194463a841c0cb80d877c094a2d9c1cbe00debbe774",
         "scripts/build_release.py": "e8f5f8d5fbb119644fbdfd3ebd463143f3677869dade5243e18d789a13f8f9ec",
         "scripts/build_ustam_app.py": "82428747254c31c28e7d218365b8c18b3ce52d551a88974c8e8874e136ce438d",
-        "scripts/build_ustam_engines.py": "e788ff921b4c3f331c1baa0f5e558c3ab71d52d240e122f6182b40c0bbe29634",
+        "scripts/build_ustam_engines.py": "541625acccfc097819c29046071100bb9e268c376b70962a67be572ed6dba2d2",
         "scripts/console/app.js": "eec25a5a68e22483ff7afe360516bc2d623217402138d38351814e6e594c09f8",
         "scripts/console/index.html": "8ebd63f9db51aa08a13b405e81b06eabed77a88635859724fef12f1d92216957",
         "scripts/console/orchestra.svg": "93a713f5de47f227e599f615c9c5b9df51b35e0a1c7ccdab1bb9ad132b2070e3",

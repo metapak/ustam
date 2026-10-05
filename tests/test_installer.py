@@ -101,6 +101,21 @@ class InstallerTests(unittest.TestCase):
             env=environment,
         )
 
+    def test_managed_block_defers_model_routing_to_registered_project_roles(self) -> None:
+        # Each preset can select different models; prose must not override them.
+        for preset in ("balanced", "quality", "economy", "quota-saver", "custom"):
+            with self.subTest(preset=preset):
+                result = self.run_installer("--preset", preset)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                block = (self.target / "AGENTS.md").read_text(encoding="utf-8")
+                self.assertIn("configured chief/root only talks", block)
+                self.assertIn("`.codex/config.toml`", block)
+                self.assertIn("registered `.codex/agents/*.toml` file", block)
+                self.assertIn("authoritative for routing", block)
+                self.assertIn("coordination-only regardless of its configured model", block)
+                self.assertNotIn("Use Luna only", block)
+                self.assertNotIn("Terra for exploration", block)
+
     def test_fresh_astra_install_has_exact_routing(self) -> None:
         result = self.run_installer()
         self.assertEqual(result.returncode, 0, result.stderr)

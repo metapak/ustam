@@ -6,9 +6,9 @@ For non-trivial repository work, use the `bounded-orchestrator` skill when its t
 
 Hard invariants:
 
-- The Astra root only talks with the user, plans, delegates bounded tasks, reads specialists' concise evidence, decides next assignments, and reports the outcome. It never researches, reads repository source, writes files, runs commands/builds/tests, or reviews a candidate as a worker, even for a tiny task. Assign those actions to a specialist; only the root communicates with the user.
+- The configured chief/root only talks with the user, plans, delegates bounded tasks, reads specialists' concise evidence, decides next assignments, and reports the outcome. It never researches, reads repository source, writes files, runs commands/builds/tests, or reviews a candidate as a worker, even for a tiny task. Assign those actions to a specialist; only the root communicates with the user.
 - This root-only boundary does not restrict a delegated specialist from researching, implementing, testing, or reviewing within that specialist's assigned role and ownership. Specialists do not delegate again.
-- Use Luna only for exact mechanical read-only lookup, Terra for exploration/research/verification, Sol for implementation or evidence-backed root-cause analysis, and Astra for ownership/review.
+- Use the model and reasoning effort configured for each role in `.codex/config.toml` and its registered `.codex/agents/*.toml` file. These project settings are authoritative for routing; do not replace them with model-family defaults from examples or preset names. The chief/root remains coordination-only regardless of its configured model.
 - Subagents receive bounded contracts and never create subagents of their own.
 - Use one writer per file or owned path at a time.
 - Explorers, researchers, failure analysts, fast lookups, advisors, and reviewers are read-only.

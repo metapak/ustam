@@ -40,7 +40,7 @@
       }
     },
     "codex": {
-      "commit": "25d2f993f324982f495cc41befd16202293a47b9",
+      "commit": "678e2b0fb508536e46f169cad694bd717ebc058b",
       "files": {
         ".agents/skills/bounded-orchestrator-security-review/SKILL.md": "0c66ee5160b05d33d64857e4cf9e4a0e149938706fb8cd6e95f8bb08d1e48d8b",
         ".agents/skills/bounded-orchestrator-ui-design/SKILL.md": "7dfc170ca65ccbba4d477903232d14533842ceaf0b941d516dec7abbd24c3441",
@@ -72,6 +72,8 @@
         "VERSION": "97a5d6e540a6120d09c39ddb667e0e8e2bac7fcc2ffef813b82e08fd60365bce",
         "presets/sol-owner.config.toml": "452b0ca8440c8684870a9194463a841c0cb80d877c094a2d9c1cbe00debbe774",
         "scripts/build_release.py": "e8f5f8d5fbb119644fbdfd3ebd463143f3677869dade5243e18d789a13f8f9ec",
+        "scripts/build_ustam_app.py": "82428747254c31c28e7d218365b8c18b3ce52d551a88974c8e8874e136ce438d",
+        "scripts/build_ustam_engines.py": "e788ff921b4c3f331c1baa0f5e558c3ab71d52d240e122f6182b40c0bbe29634",
         "scripts/console/app.js": "eec25a5a68e22483ff7afe360516bc2d623217402138d38351814e6e594c09f8",
         "scripts/console/index.html": "8ebd63f9db51aa08a13b405e81b06eabed77a88635859724fef12f1d92216957",
         "scripts/console/orchestra.svg": "93a713f5de47f227e599f615c9c5b9df51b35e0a1c7ccdab1bb9ad132b2070e3",
@@ -80,10 +82,12 @@
         "scripts/install.ps1": "60357a7685c69d079c1ec5737dc1ee2c29610f41c4af2eaad05ce0d78345f337",
         "scripts/install.py": "ed40fae14be1a43d3dd09474e93d9d8e16b91ca7431dd7de11726259dd74a0e9",
         "scripts/install.sh": "010bdb35819318563d3cc46a1a73066d4a86c9e427cb0c12c46da264c076d160",
+        "scripts/install_ustam_macos.py": "10957005fc2bd677d45cedd75f20e8d2a13d96e271ef95c61492fe2a417f77b7",
         "scripts/model_catalog.json": "37b53ced9bc4ad6019f7a4728b1845ea82b72320e9b5c8024ae76544f43fc5fd",
         "scripts/model_catalog.py": "d6b3eaa6af9a614d622d7ef5fe68177e515d7c70de1f5cce394f6f7db85e8657",
+        "scripts/sync_ustam_distribution.py": "88b1def761f7ab3c0783713e8a6448275de8a3d91bd616a8eb36014905598e3d",
         "scripts/validate.py": "4ecfd7e0682d5114f00d495fc573b8065e07fb9ff3d6752a6e2086dd9337103d",
-        "templates/AGENTS.block.md": "692bf26a2ab524b2a0dd45a72dcffb6e162c7233ac28abe0956d37fcfffd5311"
+        "templates/AGENTS.block.md": "4b9c510efb7f7be76138d3497d8fed4eec8cd2baa51b5a9f28c050d28f3f6a29"
       }
     },
     "opencode": {

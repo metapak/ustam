@@ -145,6 +145,40 @@ class AdapterTests(unittest.TestCase):
         self.manager.restore('claude', self.target, {})
         self.assertEqual(self.manager.inspect('claude', self.target)['chief']['model'], 'sonnet')
 
+    def test_claude_real_adapter_restore_preserves_usage_installation_identity(self):
+        from ustam.core import Hub
+        # Establish a real installed project, then use an older valid installation
+        # timestamp as the fixture. Reapply/restore now occur at a different date
+        # without depending on sleeps or mocking the backend transaction.
+        initial = payload('claude')
+        preview = self.manager.preview('claude', self.target, initial)
+        self.manager.apply('claude', self.target, preview['preview_id'])
+        manifest_path = self.target / '.claude/.bounded-orchestrator/install.json'
+        manifest = json.loads(manifest_path.read_text())
+        manifest['installed_at'] = '2026-10-01T00:00:00+00:00'
+        original = (json.dumps(manifest, indent=3) + '\n').encode()
+        manifest_path.write_bytes(original)
+        hub = Hub(Path(self.temporary.name) / 'hub-state', adapters=self.manager)
+        hub.projects({'action':'add', 'path':str(self.target)})
+        ident = hub.bootstrap()['projects'][0]['id']
+        hub.usage('claude', ident)
+        prior = hub.installations.read()['usage_installations'][ident]['claude']
+        changed = payload('claude')
+        changed.update(id='claude-regression', name='Claude regression')
+        changed['chief']['model'] = 'haiku'
+        preview = hub.batch('preview', {'provider':'claude','project_ids':[ident],'payload':changed})['results'][0]
+        self.assertTrue(preview['ok'], preview)
+        applied = hub.apply({'preview_ids':[preview['preview_id']]})['results'][0]
+        self.assertTrue(applied['ok'], applied)
+        self.assertNotEqual(json.loads(manifest_path.read_text())['installed_at'], manifest['installed_at'])
+        restored = hub.batch('restore', {'provider':'claude','project_ids':[ident],'payload':{}})['results'][0]
+        self.assertTrue(restored['ok'], restored)
+        self.assertEqual(self.manager.inspect('claude', self.target)['chief']['model'], 'sonnet')
+        self.assertEqual(manifest_path.read_bytes(), original)
+        after = hub.installations.read()['usage_installations'][ident]['claude']
+        self.assertEqual(after, prior)
+        self.assertEqual(hub.usage('claude', ident)['installation_boundary']['started_at'], prior['started_at'])
+
     def test_opencode_stale_and_unsupported_restore(self):
         preview = self.manager.preview('opencode', self.target, payload('opencode'))
         (self.target / '.opencode').mkdir()

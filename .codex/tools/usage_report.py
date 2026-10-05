@@ -260,7 +260,12 @@ def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
         bounded = not turn.get('ambiguous') and 'start' in turn and 'end' in turn and when is not None and turn['start'][0] <= when <= turn['end'][0]
         record['turn_start'] = turn['start'][1] if bounded else 'unknown'
         record['turn_end'] = turn['end'][1] if bounded else 'unknown'
-    raw_records.sort(key=lambda r: (r['thread'], r['timestamp']))
+    def accounting_order(record):
+        when = instant(record['timestamp'])
+        # Python's stable sort preserves file/record order for equivalent instants
+        # and undated events, which cannot establish a chronological position.
+        return record['thread'], when is None, when if when is not None else 0
+    raw_records.sort(key=accounting_order)
     request_threads = {r['thread'] for r in raw_records if r['semantics'] == 'request'}
     for record in raw_records:
         tid, stamp, current = record['thread'], record['timestamp'], record['usage']

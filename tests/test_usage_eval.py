@@ -275,6 +275,46 @@ class UsageAndEvalTests(unittest.TestCase):
             self.assertEqual(report['counter_resets'], 0)
             self.assertEqual(module.scan(sessions, date_from='2026-09-02')['totals']['total_tokens'], 50)
 
+    def test_cumulative_orders_parsed_instants_and_keeps_equal_unknown_order(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('instant_usage', USAGE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        cases = (
+            ('fractional', ('2026-10-01T00:00:00Z', '2026-10-01T00:00:00.100Z')),
+            ('offset', ('2026-10-01T01:00:00+02:00', '2026-10-01T00:00:00Z')),
+            ('equal', ('2026-10-01T01:00:00+01:00', '2026-10-01T00:00:00Z')),
+            ('unknown', ('z-invalid', 'a-invalid')),
+        )
+        for label, stamps in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as temporary:
+                sessions = Path(temporary)
+                for filename, stamp, total in zip(('a.jsonl', 'b.jsonl'), stamps, (100, 200)):
+                    rows = [{'type':'session_meta','payload':{'id':'same-session'}},
+                            {'timestamp':stamp,'type':'event_msg','payload':{'type':'token_count','info':{'total_token_usage':{'total_tokens':total}}}}]
+                    (sessions/filename).write_text(''.join(json.dumps(row)+'\n' for row in rows))
+                report = module.scan(sessions)
+                self.assertEqual(report['totals']['total_tokens'], 200)
+                self.assertEqual(report['counter_resets'], 0)
+                self.assertEqual([row['timestamp'] for row in report['records']], list(stamps))
+                self.assertEqual([row['usage']['total_tokens'] for row in report['records']], [100, 100])
+                self.assertTrue(all(row['turn_start'] == row['turn_end'] == 'unknown' for row in report['records']))
+
+    def test_cumulative_instant_order_computes_delta_before_date_cutoff(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('cutoff_instant_usage', USAGE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            sessions = Path(temporary)
+            rows = [{'type':'session_meta','payload':{'id':'same-session'}}]
+            for stamp, total in (('2026-09-30T23:30:00Z', 100), ('2026-10-01T00:00:00.100Z', 200)):
+                rows.append({'timestamp':stamp,'type':'event_msg','payload':{'type':'token_count','info':{'total_token_usage':{'total_tokens':total}}}})
+            (sessions/'rollout.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            report = module.scan(sessions, date_from='2026-10-01')
+            self.assertEqual(report['totals']['total_tokens'], 100)
+            self.assertEqual(report['counter_resets'], 0)
+
     def test_local_eval_requires_argv_and_writes_ignored_summary(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)

@@ -13,6 +13,150 @@ LOCAL_EVAL = ROOT / ".codex/tools/local_eval.py"
 
 
 class UsageAndEvalTests(unittest.TestCase):
+    def test_selected_project_skips_other_bodies_and_refreshes_memory_cache(self):
+        import importlib.util
+        from unittest.mock import patch
+        spec = importlib.util.spec_from_file_location('bounded_usage', USAGE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            sessions = Path(temporary)
+            project = str(sessions / 'project')
+            selected = sessions / 'selected.jsonl'
+            def metadata(ident, cwd, parent=None):
+                return {'type':'session_meta','payload':{'id':ident,'cwd':cwd,'source':{'subagent':{}} if parent else 'cli','parent_thread_id':parent}}
+            def token(total):
+                return {'type':'token_usage_record','usage':{'total_tokens':total}}
+            def write(path, items):
+                path.write_text(''.join(json.dumps(item)+'\n' for item in items))
+            write(selected, [metadata('root', project), token(12)])
+            write(sessions / 'child.jsonl', [metadata('child', project, 'root'), token(7)])
+            for index in range(30):
+                write(sessions / f'other-{index}.jsonl', [metadata(f'other-{index}', '/different/project'), {'type':'message','prompt':'private body '*1000}, token(999)])
+            original = module.json.loads
+            with patch.object(module.json, 'loads', wraps=original) as decode:
+                report = module.scan(sessions, project=project)
+                self.assertEqual(report['totals']['total_tokens'], 19)
+                self.assertEqual({a['id'] for a in report['agents']}, {'root', 'child'})
+                self.assertFalse(any('private body' in str(call.args[0]) for call in decode.call_args_list))
+                decode.reset_mock()
+                report['totals']['total_tokens'] = -1
+                self.assertEqual(module.scan(sessions, project=project)['totals']['total_tokens'], 19)
+                self.assertEqual(decode.call_count, 0)
+                with selected.open('a') as stream:
+                    stream.write(json.dumps(token(3))+'\n')
+                self.assertEqual(module.scan(sessions, project=project)['totals']['total_tokens'], 22)
+                write(selected, [metadata('replacement', project), token(2)])
+                self.assertEqual(module.scan(sessions, project=project)['totals']['total_tokens'], 9)
+                replacement = sessions / 'replacement.tmp'
+                write(replacement, [metadata('inode-new', project), token(4)])
+                replacement.replace(selected)
+                self.assertEqual(module.scan(sessions, project=project)['totals']['total_tokens'], 11)
+
+    def test_project_index_preserves_context_changes_request_overrides_and_appends(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('changing_project_usage', USAGE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            sessions = Path(temporary)
+            project_a, project_b = '/project-a', '/project-b'
+            path = sessions / 'changing.jsonl'
+            records = [
+                {'type':'session_meta','payload':{'id':'root','cwd':project_a,'source':'cli'}},
+                {'type':'token_usage_record','usage':{'total_tokens':11}},
+                {'type':'turn_context','payload':{'cwd':project_b}},
+                {'type':'token_usage_record','usage':{'total_tokens':37}},
+                {'type':'turn_context','payload':{'cwd':project_a}},
+                {'type':'token_usage_record','payload':{'usage':{'total_tokens':5},'context':{'project':project_b}}},
+                {'type':'token_usage_record','cwd':project_b,'usage':{'total_tokens':3}},
+            ]
+            path.write_text(''.join(json.dumps(item)+'\n' for item in records))
+            def compare(expected):
+                # The unfiltered accounting path applies all context transitions;
+                # select its resulting records as the pre-index semantics oracle.
+                baseline = [r for r in module.scan(sessions)['records'] if r['project'] == project_b]
+                optimized = module.scan(sessions, project=project_b)
+                self.assertEqual(optimized['records'], baseline)
+                self.assertEqual(optimized['totals']['total_tokens'], expected)
+            compare(45)
+            other = sessions / 'previously-unrelated.jsonl'
+            other.write_text(json.dumps({'type':'session_meta','payload':{'id':'other','cwd':project_a}})+'\n')
+            compare(45)
+            with other.open('a') as stream:
+                stream.write(json.dumps({'type':'turn_context','payload':{'cwd':project_b}})+'\n')
+                stream.write(json.dumps({'type':'token_usage_record','usage':{'total_tokens':19}})+'\n')
+            compare(64)
+
+    def test_typed_index_deadline_retains_complete_file_indices_for_one_continuation(self):
+        import importlib.util
+        from unittest.mock import patch
+        spec = importlib.util.spec_from_file_location('continuing_index_usage', USAGE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            sessions = Path(temporary)
+            for name, total in (('a', 7), ('b', 11)):
+                (sessions / (name+'.jsonl')).write_text(json.dumps({'type':'session_meta','payload':{'id':name,'cwd':'/project'}})+'\n'+json.dumps({'type':'token_usage_record','usage':{'total_tokens':total}})+'\n')
+            original = module.project_metadata_lines
+            def interrupted(stream, deadline):
+                if Path(stream.name).name == 'b.jsonl':
+                    raise module.UsageIndexTimeout('fixture index timed out')
+                yield from original(stream, deadline)
+            with patch.object(module, 'project_metadata_lines', interrupted):
+                with self.assertRaises(module.UsageIndexTimeout):
+                    module.scan(sessions, project='/project')
+            self.assertEqual(len(module._FILE_PROJECTS), 1)
+            self.assertIsNone(module._REPORT_CACHE)
+            with patch.object(module, 'project_metadata_lines', wraps=original) as index:
+                report = module.scan(sessions, project='/project')
+                self.assertEqual(index.call_count, 1)
+            self.assertEqual(report['totals']['total_tokens'], 18)
+            self.assertEqual(report['records_observed'], 2)
+
+    def test_project_index_preserves_cross_file_cumulative_baselines_and_request_precedence(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('shared_thread_usage', USAGE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            sessions = Path(temporary)
+            def write(name, project, stamp, event):
+                items = [{'type':'session_meta','payload':{'id':'same-thread','cwd':project}}, {'timestamp':stamp, **event}]
+                (sessions/name).write_text(''.join(json.dumps(item)+'\n' for item in items))
+            def cumulative(total):
+                return {'type':'event_msg','payload':{'type':'token_count','info':{'total_token_usage':{'total_tokens':total}}}}
+            write('a.jsonl', '/project-a', '2026-09-01T00:00:00Z', cumulative(100))
+            write('b.jsonl', '/project-b', '2026-09-02T00:00:00Z', cumulative(150))
+            baseline = [r for r in module.scan(sessions)['records'] if r['project'] == '/project-b']
+            report = module.scan(sessions, project='/project-b')
+            self.assertEqual(report['records'], baseline)
+            self.assertEqual(report['totals'], {'total_tokens':50})
+            write('a.jsonl', '/project-a', '2026-09-01T00:00:00Z', {'type':'token_usage_record','usage':{'total_tokens':100}})
+            baseline = [r for r in module.scan(sessions)['records'] if r['project'] == '/project-b']
+            report = module.scan(sessions, project='/project-b')
+            self.assertEqual(report['records'], baseline)
+            self.assertEqual(report['records_observed'], 0)
+            self.assertEqual(report['totals'], {})
+
+    def test_usage_scan_deadline_fails_without_partial_totals(self):
+        import importlib.util
+        from unittest.mock import patch
+        spec = importlib.util.spec_from_file_location('deadline_usage', USAGE)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as temporary:
+            sessions = Path(temporary)
+            (sessions / 'one.jsonl').write_text('{}\n')
+            with patch.object(module, 'SCAN_SECONDS', 0):
+                with self.assertRaisesRegex(module.UsageIndexTimeout, 'timed out'):
+                    module.scan(sessions, project='/project')
+            # A timeout after indexing is complete is not eligible for automatic continuation.
+            with patch.object(module, 'SCAN_SECONDS', 0), patch.object(module, 'project_files', return_value=[(sessions / 'one.jsonl', None)]):
+                with self.assertRaisesRegex(ValueError, 'timed out') as raised:
+                    module.scan(sessions, project='/project')
+                self.assertNotIsInstance(raised.exception, module.UsageIndexTimeout)
+
     def test_usage_uses_only_request_token_records(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             sessions = Path(temporary)

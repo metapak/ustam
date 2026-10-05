@@ -3,11 +3,126 @@
 from __future__ import annotations
 import argparse
 import json
+import time
+import copy
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
 COUNTERS = ('input_tokens', 'cached_input_tokens', 'output_tokens', 'reasoning_output_tokens', 'total_tokens')
+SCAN_SECONDS = 30
+_FILE_PROJECTS = {}
+_REPORT_CACHE = None
+
+class UsageIndexTimeout(ValueError):
+    """A complete project index is unfinished; no partial report is available."""
+
+
+def canonical_project(value):
+    return str(Path(value).resolve()) if value != 'unknown' and Path(value).is_absolute() else value
+
+def project_metadata_lines(stream, deadline):
+    pending = b''
+    while True:
+        if time.monotonic() >= deadline:
+            raise UsageIndexTimeout('Usage history indexing timed out; retry to continue collecting observed counters')
+        chunk = stream.read(8 * 1024 * 1024)
+        data = pending + chunk
+        end = data.rfind(b'\n') + 1 if chunk else len(data)
+        pending = data[end:]
+        keys = (b'"session_meta"', b'"turn_context"', b'"token_usage_record"')
+        positions = [data.find(key, 0, end) for key in keys]
+        offset = 0
+        while any(position >= 0 for position in positions):
+            if time.monotonic() >= deadline:
+                raise UsageIndexTimeout('Usage history indexing timed out; retry to continue collecting observed counters')
+            position = min(position for position in positions if position >= 0)
+            start = max(offset, data.rfind(b'\n', offset, position) + 1)
+            line_end = data.find(b'\n', position, end)
+            line_end = end if line_end < 0 else line_end + 1
+            yield data[start:line_end]
+            offset = line_end
+            for index, key in enumerate(keys):
+                if 0 <= positions[index] < offset:
+                    positions[index] = data.find(key, offset, end)
+        if not chunk:
+            break
+
+def project_files(root, project, deadline):
+    indexed = []
+    for path in sorted(root.rglob('*.jsonl')) if root.exists() else []:
+        if time.monotonic() >= deadline:
+            raise UsageIndexTimeout('Usage history indexing timed out; retry to continue collecting observed counters')
+        try:
+            stat = path.stat()
+            signature = (str(path), stat.st_ino, stat.st_size, stat.st_mtime_ns)
+            if project:
+                cached = _FILE_PROJECTS.get(str(path))
+                if cached is None or cached[0] != signature:
+                    projects, threads = set(), {path.stem}
+                    # A session can change cwd and a request can override its project.
+                    # Index every relevant metadata record before excluding a file;
+                    # stat changes invalidate the complete index, including appends.
+                    with path.open('rb') as stream:
+                        if stat.st_size:
+                            for line in project_metadata_lines(stream, deadline):
+                                if not any(kind in line for kind in (b'session_meta', b'turn_context', b'token_usage_record')):
+                                    continue
+                                try:
+                                    obj = json.loads(line)
+                                except (json.JSONDecodeError, UnicodeError):
+                                    projects.add('unknown')
+                                    continue
+                                if not isinstance(obj, dict):
+                                    continue
+                                payload = obj.get('payload', {})
+                                sources = []
+                                if obj.get('type') in ('session_meta', 'turn_context') and isinstance(payload, dict):
+                                    sources.append(payload)
+                                    if obj.get('type') == 'session_meta' and isinstance(payload.get('id'), str):
+                                        threads.add(payload['id'])
+                                record = token_record(obj)
+                                if record is not None:
+                                    sources.append(record)
+                                for source in sources:
+                                    for key in ('thread_id', 'session_id', 'conversation_id'):
+                                        value = source.get(key)
+                                        if isinstance(value, (str, int)) and str(value):
+                                            threads.add(str(value))
+                                    for key in ('cwd', 'project'):
+                                        value = source.get(key)
+                                        if isinstance(value, (str, int)) and str(value) and str(value) not in projects:
+                                            projects.add(canonical_project(str(value)))
+                                if len(projects) > 256 or len(threads) > 256:
+                                    projects, threads = {'unknown'}, None
+                                    break
+                    cached = (signature, projects or {'unknown'}, threads)
+                    if len(_FILE_PROJECTS) >= 4096:
+                        _FILE_PROJECTS.clear()
+                    _FILE_PROJECTS[str(path)] = cached
+                indexed.append((path, signature, cached[1], cached[2]))
+            else:
+                indexed.append((path, signature, {'unknown'}, {path.stem}))
+        except OSError:
+            # Preserve unreadable-file accounting in scan.
+            indexed.append((path, None, {'unknown'}, None))
+    # Cumulative baselines and request-format precedence are per thread, before
+    # project filtering. Include every file sharing an eligible thread, even if
+    # that file's records belong to another project. Multi-thread files can link
+    # further dependencies, so compute the closure before accounting.
+    if not project or any(threads is None for _, _, _, threads in indexed):
+        return [(path, signature) for path, signature, _, _ in indexed]
+    eligible = {index for index, (_, _, projects, _) in enumerate(indexed) if 'unknown' in projects or project in projects}
+    threads = set().union(*(indexed[index][3] for index in eligible))
+    while True:
+        linked = {index for index, (_, _, _, identities) in enumerate(indexed) if identities & threads}
+        new = linked - eligible
+        if not new:
+            break
+        eligible.update(new)
+        threads.update(*(indexed[index][3] for index in new))
+    return [(path, signature) for index, (path, signature, _, _) in enumerate(indexed) if index in eligible]
+
 META = ('model', 'model_id', 'effort', 'reasoning_effort', 'model_reasoning_effort', 'role', 'agent_role', 'thread_id', 'session_id', 'conversation_id', 'cwd', 'project')
 
 def scalar(obj, *keys):
@@ -39,11 +154,20 @@ def instant(value):
         return None
 
 def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
+    global _REPORT_CACHE
+    project = canonical_project(project)
+    deadline = time.monotonic() + SCAN_SECONDS
+    selected = project_files(root, project, deadline)
+    cache_key = (str(root.resolve()), date_from, date_to, project, thread, tuple(signature for _, signature in selected))
+    if project and _REPORT_CACHE is not None and _REPORT_CACHE[0] == cache_key:
+        return copy.deepcopy(_REPORT_CACHE[1])
     groups = defaultdict(lambda: defaultdict(int))
     records, raw_records, seen, previous = [], [], set(), {}
     turns, agents = {}, {}
     files = malformed = duplicates = resets = unreadable = 0
-    for path in sorted(root.rglob('*.jsonl')) if root.exists() else []:
+    for path, _ in selected:
+        if time.monotonic() >= deadline:
+            raise ValueError('Usage collection timed out; retry to collect observed counters')
         files += 1
         metadata = {'thread_id': path.stem}
         try:
@@ -52,7 +176,13 @@ def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
             unreadable += 1
             continue
         with lines:
-            for line in lines:
+            for index, line in enumerate(lines):
+                if index % 128 == 0 and time.monotonic() >= deadline:
+                    raise ValueError('Usage collection timed out; retry to collect observed counters')
+                # Message/tool bodies are not accounting data. Avoid decoding large
+                # unrelated payloads; only metadata and accounting events are needed.
+                if not any(kind in line for kind in ('session_meta', 'turn_context', 'token_usage_record', 'token_count', 'task_complete', 'turn_aborted')) and any(kind in line[:256] for kind in ('"response_item"', '"message"')):
+                    continue
                 try:
                     obj = json.loads(line)
                 except json.JSONDecodeError:
@@ -75,7 +205,7 @@ def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
                         source = 'subagent' if isinstance(payload.get('source'), dict) and 'subagent' in payload['source'] else 'root' if isinstance(payload.get('source'), str) else 'unknown'
                         name = payload.get('agent_nickname') if isinstance(payload.get('agent_nickname'), str) else ''
                         role = payload.get('agent_role') if isinstance(payload.get('agent_role'), str) else ''
-                        candidate = {'id': agent_id, 'parent': parent, 'source': source, 'name': name[:80], 'role': role[:80], 'project': scalar(payload, 'cwd'), 'observed_at': scalar(obj, 'timestamp')}
+                        candidate = {'id': agent_id, 'parent': parent, 'source': source, 'name': name[:80], 'role': role[:80], 'project': canonical_project(scalar(payload, 'cwd')), 'observed_at': scalar(obj, 'timestamp')}
                         previous_agent = agents.get(agent_id)
                         if previous_agent and any(previous_agent.get(k) != candidate[k] for k in ('parent', 'source', 'name', 'role', 'project')):
                             candidate['ambiguous'] = True
@@ -110,7 +240,7 @@ def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
                 effort = scalar(meta, 'effort', 'reasoning_effort', 'model_reasoning_effort')
                 role = scalar(meta, 'role', 'agent_role')
                 tid = scalar(meta, 'thread_id', 'session_id', 'conversation_id')
-                proj = scalar(meta, 'project', 'cwd')
+                proj = canonical_project(scalar(meta, 'project', 'cwd'))
                 stamp = record['timestamp']
                 current = {k: v for k, v in record['usage'].items() if k in COUNTERS and type(v) is int and v >= 0}
                 if not current:
@@ -161,7 +291,11 @@ def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
         result_groups.append(dict(zip(('model', 'role', 'thread', 'project'), key), usage=dict(usage)))
         for name, value in usage.items():
             grand[name] += value
-    return {'platform': 'codex', 'status': 'available' if records else 'unavailable', 'source': 'local session request usage; legacy cumulative token_count fallback', 'files_scanned': files, 'records_observed': len(records), 'duplicates_skipped': duplicates, 'counter_resets': resets, 'unreadable_files': unreadable, 'malformed_lines_skipped': malformed, 'totals': dict(grand), 'groups': result_groups, 'records': records, 'agents': list(agents.values()), 'cost': None, 'limitations': 'Observed counters only, not quota or billing. Cache is included in input; reasoning is included in output. Unknown metadata is unavailable; thread filename is a fallback. Unknown legacy timestamps cannot be reliably ordered. Legacy resets count a new segment. Request records take precedence per thread; mixed-format logs may be incomplete. No reliable pricing metadata; cost unavailable.'}
+    report = {'platform': 'codex', 'status': 'available' if records else 'unavailable', 'source': 'local session request usage; legacy cumulative token_count fallback', 'files_scanned': files, 'records_observed': len(records), 'duplicates_skipped': duplicates, 'counter_resets': resets, 'unreadable_files': unreadable, 'malformed_lines_skipped': malformed, 'totals': dict(grand), 'groups': result_groups, 'records': records, 'agents': list(agents.values()), 'cost': None, 'limitations': 'Observed counters only, not quota or billing. Cache is included in input; reasoning is included in output. Unknown metadata is unavailable; thread filename is a fallback. Unknown legacy timestamps cannot be reliably ordered. Legacy resets count a new segment. Request records take precedence per thread; mixed-format logs may be incomplete. No reliable pricing metadata; cost unavailable.'}
+
+    if project and len(records) <= 10000 and len(agents) <= 10000 and all(signature is not None for _, signature in selected):
+        _REPORT_CACHE = (cache_key, copy.deepcopy(report))
+    return report
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)

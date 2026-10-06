@@ -12,6 +12,7 @@ import secrets
 import shutil
 import stat
 import sys
+import shlex
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -62,6 +63,7 @@ ROLES = (
     "owner",
     "explorer",
     "researcher",
+    "acceptance-test-author",
     "implementer",
     "verifier",
     "failure-analyst",
@@ -73,6 +75,7 @@ ROLE_LABELS = {
     "owner": "owner / ana yonetici",
     "explorer": "explorer / inceleyici",
     "researcher": "researcher / arastirmaci",
+    "acceptance-test-author": "acceptance test author / kabul testi yazari",
     "implementer": "implementer / uygulayici",
     "verifier": "verifier / kontrolcu",
     "failure-analyst": "failure analyst / hata cozumleyici",
@@ -126,7 +129,14 @@ PRESETS = {
         "advisor": ("sonnet", "medium"),
     },
 }
+for _profile in PRESETS.values():
+    _profile["acceptance-test-author"] = ("sonnet", "medium")
+
 BASE_MANAGED_FILES = (
+    Path(".claude/agents/acceptance-test-author.md"),
+    Path(".claude/tools/work_protocol.py"),
+    Path(".claude/tools/work_protocol_core.py"),
+    Path(".claude/tools/work_protocol"),
     Path(".claude/agents/explorer.md"),
     Path(".claude/agents/researcher.md"),
     Path(".claude/agents/implementer.md"),
@@ -164,6 +174,15 @@ SECURE_UNINSTALL_DIR_FD = all(
     function in getattr(os, "supports_dir_fd", ())
     for function in (os.open, os.rename, os.unlink, os.link, os.mkdir, os.stat)
 )
+
+
+def work_protocol_wrapper(target):
+    if getattr(sys, 'frozen', False):
+        command = [sys.executable, '--work-protocol', 'claude']
+    else:
+        command = [sys.executable, str((target / '.claude/tools/work_protocol.py').resolve())]
+    command += ['--project', str(target.resolve())]
+    return '#!/bin/sh\n# Fixed project and installer runtime; no paid call.\nexec ' + ' '.join(shlex.quote(a) for a in command) + ' "$@"\n'
 
 
 class InstallError(RuntimeError):
@@ -1251,7 +1270,7 @@ def main(argv: list[str] | None = None) -> int:
                 validate_model_token(args.external_model, "--external-model")
                 validate_effort(args.external_effort, "--external-effort", spec["efforts"])
             for relative in BASE_MANAGED_FILES:
-                content = None
+                content = work_protocol_wrapper(target) if relative == Path('.claude/tools/work_protocol') else None
                 if relative.parent == Path(".claude/agents"):
                     model, effort = routing[relative.stem]
                     content = render_agent(root / relative, model, effort)

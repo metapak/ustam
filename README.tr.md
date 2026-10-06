@@ -20,13 +20,13 @@ Ekibi kurun, değişiklikleri kontrol edin ve geçmiş kullanımı görün. Şef
 
 ## Güncel Türkçe tanıtım
 
-[![Ustam’ın güncel kullanımını izleyin](docs/assets/ustam-current-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-current-usage-tr-65s.mp4)
+[![Ustam Türkçe tanıtımını izleyin](docs/assets/ustam-trailer-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4)
 
-[Türkçe videoyu oynatın veya indirin (MP4)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-current-usage-tr-65s.mp4). 65 saniyelik tanıtım; iş türüne göre hazır ekipleri, orkestra düzenlemeyi, yardımcı ve model seçimini, proje kurulumunu ve geçmiş kullanımı gösterir. Kullanım rakamları örnek veridir. GitHub satır içinde oynatıcı göstermezse postere veya MP4 bağlantısına tıklayın.
+[Türkçe videoyu oynatın veya indirin (MP4, 55 saniye)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4). Türkçe başlıklar, özgün müzik ve ses efektleriyle Ustam tanıtımı; sesli anlatım içermez. Ekranlardaki kullanım rakamları örnek veridir. Videoyu açmak için kapağa veya MP4 bağlantısına tıklayın.
 
 ## Dört adımda kurulum
 
-**Mac durumu:** Yayımlanan beta.1/beta.2 Mac indirmelerinde ilk açılış sorunu çözülmüş değildir. Yerelde derlenen uygulama bir Mac üzerinde doğrulandı; bu, herkese açık indirmenin açıldığını kanıtlamaz. beta.3 yayımlanmadı. [Mac notlarına bakın](docs/ustam-hub.tr.md).
+**Güncel sürüm:** [1.0.0-beta.3](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.3) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.3/ustam-1.0.0-beta.3-macos-arm64.zip) · [Sürüm notları](docs/release-ustam-v1.0.0-beta.3.tr.md). Mac paketi yerelde doğrulandı; herkese açık indirmede Gatekeeper kısıtları çözülmüş değildir. Aşağıdaki Windows/Linux bağlantıları önceki beta.2 sürümüdür.
 
 1. **Ustam’ı indirin:** [1.0.0-beta.2 sürümünde](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.2) Windows veya Linux için yerel uygulama ZIP’ini seçin ve tamamını çıkarın: [Windows](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-windows-x86_64.zip) · [Linux](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-linux-x86_64.zip).
 2. **Açın:** Windows’ta **Ustam.exe**, Linux’ta **Ustam** dosyasını açın. Mac’te yerel kaynak derlemesi için **Ustam.app** dosyasını açın. Yerel paket Python içerir. Mac uygulaması tek başına taşınabilir; Windows/Linux’ta çıkarılan dosyaları birlikte tutun.

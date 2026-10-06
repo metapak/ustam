@@ -125,14 +125,14 @@ class JobsTests(unittest.TestCase):
         self.assertIn('optional roles are not invoked', job['plan']['helper_selection'])
         self.assertEqual(job['plan']['job_capabilities'], Runtime.job_capabilities('opencode'))
 
-    def test_codex_nine_roles_and_fifty_slots_are_job_eligible(self):
+    def test_codex_registered_roles_and_fifty_slots_are_job_eligible(self):
         payload = self.payload()
         payload['orchestra']['helpers'] = [dict(role=role, model=role + '-model', effort='high') for role in Runtime.ROLES]
-        payload['orchestra']['helpers'] += [dict(payload['orchestra']['helpers'][3]) for _ in range(41)]
+        payload['orchestra']['helpers'] += [dict(payload['orchestra']['helpers'][3]) for _ in range(50 - len(Runtime.ROLES))]
         job = self.manager.plan(payload)
         self.assertEqual(job['plan']['configured_helper_count'], 50)
-        self.assertEqual(job['plan']['selected_helper_count'], 9)
-        self.assertEqual(len(job['plan']['execution_helpers']), 9)
+        self.assertEqual(job['plan']['selected_helper_count'], len(Runtime.ROLES))
+        self.assertEqual(len(job['plan']['execution_helpers']), len(Runtime.ROLES))
         payload['orchestra']['helpers'].append(dict(payload['orchestra']['helpers'][3]))
         with self.assertRaisesRegex(ValueError, 'at most 50'):
             self.manager.plan(payload)

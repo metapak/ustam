@@ -199,7 +199,7 @@ class ConsoleTests(unittest.TestCase):
         plan = self.console.preview({'preset': 'focused'})
         self.console.save({'preview_id': plan['preview_id']})
         removal = self.console.uninstall_preview({})
-        destination = self.console.target/'.codex/tools/usage_report.py'
+        destination = self.console.target/'.codex/tools/work_protocol_core.py'
         original_hash = dashboard.installer.sha256_path
         calls = 0
 
@@ -256,13 +256,13 @@ class ConsoleTests(unittest.TestCase):
         plan = self.console.preview({'preset': 'focused'})
         self.console.save({'preview_id': plan['preview_id']})
         removal = self.console.uninstall_preview({})
-        destination = self.console.target/'.codex/tools/usage_report.py'
+        destination = self.console.target/'.codex/tools/work_protocol_core.py'
         original_rename = dashboard.installer.os.rename
         changed = False
 
         def edit_before_stage(source, destination_name, *args, **kwargs):
             nonlocal changed
-            if source == 'usage_report.py' and not changed:
+            if source == destination.name and not changed:
                 destination.write_bytes(destination.read_bytes() + b'\n# stage-time edit\n')
                 changed = True
             return original_rename(source, destination_name, *args, **kwargs)

@@ -42,6 +42,121 @@ class AdapterTests(unittest.TestCase):
         self.env.stop()
         self.temporary.cleanup()
 
+    def test_usage_index_cache_is_shared_only_with_codex_workers(self):
+        from unittest.mock import Mock
+        from ustam.adapters import _Session
+        cache = self.target.resolve().parent / 'private-index'
+        with patch.dict(os.environ, {'USTAM_USAGE_INDEX_CACHE': '/untrusted/inherited'}), patch('ustam.adapters.subprocess.Popen', return_value=Mock()) as spawn, patch.object(_Session, '_read'):
+            for provider in ('codex', 'claude', 'opencode'):
+                _Session(provider, 1, str(self.target), cache)
+                environment = spawn.call_args.kwargs['env']
+                if provider == 'codex':
+                    self.assertEqual(environment['USTAM_USAGE_INDEX_CACHE'], str(cache))
+                else:
+                    self.assertNotIn('USTAM_USAGE_INDEX_CACHE', environment)
+            _Session('codex', 1, str(self.target))
+            self.assertNotIn('USTAM_USAGE_INDEX_CACHE', spawn.call_args.kwargs['env'])
+
+    def test_bounded_large_worker_response_keeps_all_records_and_inputs_stay1mib(self):
+        import io,queue,threading
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        from ustam import adapter_worker
+        from ustam.adapters import _Session,MAX_MESSAGE,MAX_RESPONSE
+        self.assertEqual(MAX_MESSAGE,1024*1024);self.assertEqual(adapter_worker.MAX_MESSAGE,MAX_MESSAGE);self.assertEqual(MAX_RESPONSE,16*1024*1024)
+        rows=[{'thread':str(i),'timestamp':'2026-10-06T00:00:00Z','model':'fixture-model','project':'/fixture','role':'unknown','effort':'unknown','session_id':'unknown','usage':{'total_tokens':i,'input_tokens':i}} for i in range(24000)]
+        request={'reqid':'a'*32,'method':'usage','target':str(self.target),'params':{}}
+        for result,expected in (({'records':rows},True),({'oversize':'x'*MAX_RESPONSE},False)):
+            worker=Mock(provider='codex',module=SimpleNamespace(usage=SimpleNamespace(UsageIndexTimeout=ValueError)));worker.call.return_value=result;output=io.BytesIO()
+            with patch.object(adapter_worker,'Engine',return_value=worker),patch.object(sys,'stdin',SimpleNamespace(buffer=io.BytesIO((json.dumps(request)+'\n').encode()))),patch.object(sys,'stdout',SimpleNamespace(buffer=output)):
+                self.assertEqual(adapter_worker.main(['codex']),0)
+            response=json.loads(output.getvalue());self.assertEqual(response['ok'],expected)
+            if expected:
+                self.assertGreater(len(output.getvalue()),5184501);self.assertEqual(response['result']['records'],rows)
+                session=_Session.__new__(_Session);session.responses=queue.Queue();session.process=SimpleNamespace(stdout=io.BytesIO(output.getvalue()));session._read();self.assertEqual(session.responses.get()['result']['records'],rows)
+            else:
+                self.assertEqual(response['error']['code'],'bounds');self.assertNotIn('result',response)
+                session=_Session.__new__(_Session);session.timeout=1;session.lock=threading.Lock();session.responses=queue.Queue();session.process=SimpleNamespace(stdin=io.BytesIO())
+                session.responses.put(response)
+                with patch('ustam.adapters.uuid.uuid4',return_value=SimpleNamespace(hex='a'*32)):
+                    with self.assertRaises(AdapterError) as raised:session.request('usage',str(self.target),{})
+                self.assertEqual(raised.exception.code,'bounds')
+        session=_Session.__new__(_Session);session.timeout=1;session.lock=threading.Lock();session.responses=queue.Queue();session.process=SimpleNamespace(stdin=io.BytesIO())
+        with self.assertRaisesRegex(AdapterError,'request exceeded bounds'):session.request('usage',str(self.target),{'oversize':'x'*MAX_MESSAGE})
+        self.assertEqual(session.process.stdin.getvalue(),b'')
+
+    def test_worker_and_session_preserve_only_typed_index_timeout(self):
+        import io
+        import queue
+        import threading
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        from ustam import adapter_worker
+        from ustam.adapters import _Session
+        class UsageIndexTimeout(ValueError):
+            pass
+        for exception, expected in ((UsageIndexTimeout('index timed out'), 'usage_index_timeout'), (ValueError('other timeout'), 'adapter_error')):
+            with self.subTest(expected=expected):
+                worker = Mock(provider='codex', module=SimpleNamespace(usage=SimpleNamespace(UsageIndexTimeout=UsageIndexTimeout)))
+                worker.call.side_effect = exception
+                request = {'reqid':'a'*32,'method':'usage','target':str(self.target),'params':{}}
+                output = io.BytesIO()
+                with patch.object(adapter_worker, 'Engine', return_value=worker), patch.object(sys, 'stdin', SimpleNamespace(buffer=io.BytesIO((json.dumps(request)+'\n').encode()))), patch.object(sys, 'stdout', SimpleNamespace(buffer=output)):
+                    self.assertEqual(adapter_worker.main(['codex']), 0)
+                response = json.loads(output.getvalue())
+                self.assertEqual(response['error']['code'], expected)
+                session = _Session.__new__(_Session)
+                session.timeout, session.lock, session.responses = 1, threading.Lock(), queue.Queue()
+                session.process = SimpleNamespace(stdin=io.BytesIO())
+                session.responses.put(response)
+                with patch('ustam.adapters.uuid.uuid4', return_value=SimpleNamespace(hex='a'*32)):
+                    with self.assertRaises(AdapterError) as raised:
+                        session.request('usage', str(self.target), {})
+                self.assertEqual(raised.exception.code, expected)
+
+    def test_opencode_usage_collects_project_scoped_timestamped_exports(self):
+        from unittest.mock import Mock
+        engine = Engine.__new__(Engine)
+        engine.provider = 'opencode'
+        engine.target = self.target.resolve()
+        engine.backend = Mock()
+        usage = Mock()
+        usage.collect_breakdown.return_value = {'records': [], 'coverage': {'limited_to_recent_sessions': True}}
+        with patch.object(engine, 'select'), patch('ustam.adapter_worker.importlib.import_module', return_value=usage):
+            result = engine.call('usage', str(self.target), {})
+        usage.collect_breakdown.assert_called_once_with(root=self.target.resolve(), project=str(self.target.resolve()))
+        usage.collect.assert_not_called()
+        self.assertIn('coverage', result)
+
+    def test_usage_passes_canonical_project_filter(self):
+        from unittest.mock import Mock
+        engine = Engine.__new__(Engine)
+        engine.provider = 'codex'
+        engine.target = self.target.resolve()
+        engine.backend = Mock()
+        with patch.object(engine, 'select'):
+            engine.call('usage', str(self.target), {})
+        engine.backend.report.assert_called_once_with({'project': [str(self.target.resolve())]})
+
+    def test_busy_target_lock_has_bounded_wait(self):
+        import threading
+        from unittest.mock import Mock
+        target = str(self.target.resolve())
+        session = Mock()
+        session.process.poll.return_value = None
+        self.manager._sessions[('codex', target)] = session
+        lock = threading.Lock()
+        lock.acquire()
+        self.manager._targets[target] = lock
+        self.manager.timeout = 0.02
+        try:
+            with self.assertRaisesRegex(AdapterError, 'busy'):
+                self.manager.usage('codex', self.target)
+            session.request.assert_not_called()
+        finally:
+            lock.release()
+            self.manager._sessions.clear()
+
     def test_manifest_closure_verified(self):
         for provider in ('codex', 'claude', 'opencode'):
             self.assertTrue(verify_engine(provider).is_dir())

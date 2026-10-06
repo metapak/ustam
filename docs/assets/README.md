@@ -11,6 +11,8 @@ and screenshots captured from the current local console.
 | `console-en.png`, `console-tr.png` | 1600 × 2039 (EN), 1600 × 2055 (TR) | Current Usage orchestra, recorded models and token shares |
 | `ustam-poster-en.png`, `ustam-poster-tr.png` | 1920 × 1080 | Language-specific video posters |
 | `ustam-promo-en-40s.mp4`, `ustam-promo-tr-40s.mp4` | 1920 × 1080, 40 seconds | Legacy console introductions with music |
+| `ustam-trailer-poster-tr.png` | 1920 × 1080 | Current Turkish trailer cover |
+| `ustam-trailer-tr-55s.mp4` | 1920 × 1080, 55 seconds | Turkish trailer with original music and sound effects, no narration |
 | `ustam-current-poster-tr.png` | 1920 × 1080 | Current Turkish hub video poster |
 | `ustam-current-usage-tr-65s.mp4` | 1920 × 1080, 65 seconds | Current Turkish hub walkthrough with music |
 
@@ -43,7 +45,8 @@ The example model selection reflects the local catalogue at capture time;
 it does not promise account access. Token values are sample historical
 records. The promotional videos use illustrative sample data.
 
-The Turkish README links the current hub poster to its 65-second Turkish MP4.
+The English and Turkish README pages link the Turkish trailer cover to its
+55-second MP4. The previous 65-second hub walkthrough remains available.
 The legacy console guides retain their matching 40-second introductions.
 Poster links use raw.githubusercontent.com.
 This opens the original playable/downloadable asset even when GitHub does not

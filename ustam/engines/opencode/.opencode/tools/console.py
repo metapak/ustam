@@ -8,11 +8,14 @@ from urllib.parse import parse_qs, urlsplit
 import usage_report
 import team_editor
 
-ROLES = ('owner','fast-lookup','explorer','researcher','implementer','verifier','failure-analyst','qa-operator','reviewer','advisor')
+ROLES = ('owner','acceptance-test-author','fast-lookup','explorer','researcher','implementer','verifier','failure-analyst','qa-operator','reviewer','advisor')
 PROFILES = {
  'balanced':[36,10,22,22,34,20,22,20,22,24], 'quality':[56,16,34,34,52,32,34,32,36,40],
  'economy':[24,7,14,14,22,13,14,13,14,16], 'quota-saver':[18,5,10,10,16,9,10,9,10,12],
 }
+for _name, _steps in list(PROFILES.items()):
+    PROFILES[_name] = [_steps[0], _steps[5], *_steps[1:]]
+
 MODEL = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._/-]*(?:#[A-Za-z0-9][A-Za-z0-9._-]*)?$')
 SUPERSEDED_GPT = re.compile(r'(?:^|/)gpt-5(?:[.-]|$)', re.IGNORECASE)
 class ConsoleError(ValueError): pass

@@ -6,9 +6,9 @@ import json
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-PINS = {'codex': ('codex-bounded-orchestrator', '3904f7aac041d70f364f9ce8a1eae671b0ad94c1'),
-        'claude': ('claude-bounded-orchestrator', '3fbef57dbf3e075e6256db31d407db4cf1cf9260'),
-        'opencode': ('opencode-bounded-orchestrator', '564b4701142142d1ca6dc97ef2ef910450384e56')}
+PINS = {'codex': ('codex-bounded-orchestrator', '46ca3064b7665ebe683b77b496fe5d1fe218bdbc'),
+        'claude': ('claude-bounded-orchestrator', 'aeefd8551d106c9b43e5fc6490fdfee1047aecbc'),
+        'opencode': ('opencode-bounded-orchestrator', 'fa8068f6bc360b6c765570d87d4cf39ffa597f32')}
 PREFIXES = ('.agents/', '.codex/', '.claude/', '.opencode/', 'scripts/', 'templates/', 'presets/')
 TOP = {'VERSION', 'LICENSE', 'NOTICE'}
 

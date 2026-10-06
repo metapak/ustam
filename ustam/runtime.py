@@ -113,7 +113,7 @@ def cli_environment(executable, project=None, env=None, platform=None):
 class Runtime:
     MAX_HELPER_SLOTS = 50
     REQUIRED_ROLES = ('explorer', 'implementer', 'verifier', 'reviewer')
-    ROLES = ('fast_lookup', 'explorer', 'researcher', 'implementer', 'verifier', 'reviewer', 'failure_analyst', 'qa_operator', 'advisor')
+    ROLES = ('acceptance_test_author', 'fast_lookup', 'explorer', 'researcher', 'implementer', 'verifier', 'reviewer', 'failure_analyst', 'qa_operator', 'advisor')
     CHIEF = ('You are the read-only chief. Never implement, edit files, run shell commands, or inspect files yourself. '
              'Only plan, delegate to fixed registered roles, read their compact summaries, and report. '
              'Delegate inspection to explorer; assign implementer explicit bounded file ownership and acceptance criteria. '

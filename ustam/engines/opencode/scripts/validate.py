@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-ROLES=("owner","fast-lookup","explorer","researcher","implementer","verifier","failure-analyst","qa-operator","reviewer","advisor")
+ROLES=("owner","fast-lookup","explorer","researcher","acceptance-test-author","implementer","verifier","failure-analyst","qa-operator","reviewer","advisor")
 CHILDREN=ROLES[1:]
 V1_KEYS={"agent","tools","max_depth","model_reasoning_effort","sandbox_mode","approval_policy"}
 REQUIRED=("README.md","README.tr.md","LICENSE","NOTICE","SECURITY.md","CONTRIBUTING.md","CHANGELOG.md","VERSION","INSTALL-MACOS-LINUX.md","INSTALL-WINDOWS.md","docs/architecture.md","docs/profiles.md","docs/profiles.tr.md","docs/usage-and-local-eval.md","docs/usage-and-local-eval.tr.md","docs/task-ledger.md","docs/task-ledger.tr.md","docs/roadmap.md","docs/roadmap.tr.md","docs/release-v0.1.0.md","docs/release-v0.1.0.tr.md","docs/assets/opencode-bounded-orchestrator-cover-en.svg","docs/assets/opencode-bounded-orchestrator-cover-tr.svg","docs/local-console.md",".opencode/tools/console.py",".opencode/tools/team_editor.py",".opencode/tools/console.html",".opencode/tools/console.js",".opencode/tools/console.css",".opencode/tools/orchestra-actors.svg","scripts/install.py","scripts/dashboard.py","scripts/smoke_opencode.py","scripts/build_release.py","setup.command","setup.ps1","setup.cmd","launchers/Ustam.app/Contents/Info.plist","launchers/Ustam.app/Contents/MacOS/launch","launchers/launch_dashboard.py","launchers/Launch Ustam.vbs",".github/workflows/ci.yml")

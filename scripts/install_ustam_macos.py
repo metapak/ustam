@@ -64,7 +64,7 @@ def verify_source_assets(source):
                 raise ValueError('Unsafe engine asset')
             if hashlib.sha256((base / relative).read_bytes()).hexdigest() != digest:
                 raise ValueError('Engine asset hash mismatch: ' + name)
-    for name in ('index.html', 'app.js', 'style.css'):
+    for name in ('index.html', 'app.js', 'style.css', 'icons.mjs'):
         if not safe('ustam/ui/' + name).is_file():
             raise ValueError('Missing hub UI asset: ' + name)
 
@@ -126,11 +126,126 @@ def write_status(job, phase, detail=''):
     temporary.replace(job / 'status.json')
 
 
+def process_identity(pid):
+    # Kernel creation identity survives Python's macOS launcher exec and has
+    # finer resolution than ps's one-second lstart text. Read only our PID.
+    if sys.platform == 'darwin':
+        import ctypes
+        class BSDInfo(ctypes.Structure):
+            # SDK sys/proc_info.h proc_bsdinfo, MAXCOMLEN=16.
+            _fields_ = [('prefix', ctypes.c_uint32 * 12), ('comm', ctypes.c_char * 16),
+                        ('name', ctypes.c_char * 32), ('misc', ctypes.c_uint32 * 6),
+                        ('seconds', ctypes.c_uint64), ('microseconds', ctypes.c_uint64)]
+        info = BSDInfo()
+        library = ctypes.CDLL('/usr/lib/libproc.dylib')
+        query = library.proc_pidinfo
+        query.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int]
+        query.restype = ctypes.c_int
+        if query(pid, 3, 0, ctypes.byref(info), ctypes.sizeof(info)) != ctypes.sizeof(info):
+            return None
+        if info.prefix[1] == 5:  # SZOMB: dead, awaiting collection
+            return None
+        return {'started': str(info.seconds) + '.' + str(info.microseconds),
+                'group': info.misc[1], 'uid': info.prefix[5]}
+    if sys.platform.startswith('linux'):
+        try:
+            process = Path('/proc') / str(pid)
+            fields = (process / 'stat').read_text().rpartition(')')[2].split()
+            if fields[0] == 'Z':
+                return None
+            return {'started': fields[19], 'group': int(fields[2]), 'uid': process.stat().st_uid}
+        except (OSError, IndexError, ValueError):
+            return None
+    raise RuntimeError('Local Mac installer process checks require macOS')
+
+
+def save_identity(job, name, pid):
+    identity = {'pid': pid, 'identity': process_identity(pid)}
+    temporary = job / (name + '.tmp')
+    temporary.write_text(json.dumps(identity), encoding='utf-8')
+    temporary.replace(job / (name + '.json'))
+
+
+def stop_recorded_stage(job):
+    path = job / 'stage-process.json'
+    if not path.exists():
+        return
+    record = json.loads(path.read_text())
+    # Match kernel creation time, group and owner before any signal. A stale PID
+    # record cannot grant authority to signal an unrelated reused process.
+    if not record.get('identity') or process_identity(record['pid']) != record['identity']:
+        return
+    if record['identity']['group'] != record['pid'] or record['identity']['uid'] != os.getuid():
+        return
+    for signum in (signal.SIGTERM, signal.SIGKILL):
+        if signum == signal.SIGKILL:
+            current = process_identity(record['pid'])
+            if current is not None and current != record['identity']:
+                break
+        try:
+            os.killpg(record['pid'], signum)
+        except (ProcessLookupError, PermissionError):
+            break
+        if signum == signal.SIGTERM:
+            time.sleep(.3)
+
+
+def job_status(job):
+    result = json.loads((job / 'status.json').read_text())
+    if result['phase'] in ('done', 'error'):
+        return result
+    identity_path = job / 'helper-process.json'
+    if not identity_path.exists():
+        raise RuntimeError('Installer identity is missing. See ' + str(job / 'helper.log'))
+    helper = json.loads(identity_path.read_text())
+    if not helper.get('identity') or process_identity(helper['pid']) != helper['identity']:
+        stop_recorded_stage(job)
+        write_status(job, 'error', 'Installer stopped unexpectedly. Previous app was kept during build. See ' + str(job / 'build.log'))
+        result = json.loads((job / 'status.json').read_text())
+    return result
+
+
+def stage_members(group):
+    # Query only this retained group (also its session on Linux), no global scan.
+    result = subprocess.run(['/bin/ps', '-g', str(group), '-o', 'pid='],
+                            capture_output=True, text=True, timeout=1)
+    members = []
+    for value in result.stdout.split():
+        pid = int(value)
+        identity = process_identity(pid)
+        if identity and identity['group'] == group and identity['uid'] == os.getuid():
+            members.append(pid)
+    return members
+
+
+def supervised_stage(argv, job, parent):
+    # This guardian reserves the group identity until all descendants finish.
+    # A caught signal resets to default on child exec, unlike SIG_IGN.
+    signal.signal(signal.SIGTERM, lambda *_: None)
+    group = os.getpgrp()
+    child = subprocess.Popen(argv)
+    deadline = time.monotonic() + 3600
+    while True:
+        parent_gone = process_identity(parent['pid']) != parent['identity']
+        if parent_gone or (job / 'cancel').exists() or time.monotonic() > deadline:
+            os.killpg(group, signal.SIGTERM)
+            time.sleep(.3)
+            os.killpg(group, signal.SIGKILL)
+        result = child.poll()
+        if result is not None and not [pid for pid in stage_members(group) if pid != os.getpid()]:
+            return result if result >= 0 else 1
+        time.sleep(.1)
+
+
 def run_stage(argv, job, cwd):
     if (job / 'cancel').exists():
         raise InterruptedError('Installation cancelled. Previous installed app was kept.')
     with (job / 'build.log').open('ab') as log:
-        process = subprocess.Popen(argv, cwd=cwd, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        parent = {'pid': os.getpid(), 'identity': process_identity(os.getpid())}
+        command = [sys.executable, str(Path(__file__).resolve()), '--stage-job', str(job),
+                   '--stage-parent', json.dumps(parent), '--stage', *argv]
+        process = subprocess.Popen(command, cwd=cwd, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        save_identity(job, 'stage-process', process.pid)
         deadline = time.monotonic() + 3600
         try:
             while process.poll() is None:
@@ -161,6 +276,7 @@ def run_stage(argv, job, cwd):
                 if process.poll() is None:
                     raise
             process.wait(timeout=3)
+            (job / 'stage-process.json').unlink(missing_ok=True)
 
 
 
@@ -205,20 +321,26 @@ def main():
     parser.add_argument('--worker', type=Path)
     parser.add_argument('--job')
     parser.add_argument('--home', type=Path, default=Path.home())
+    parser.add_argument('--stage-job', type=Path)
+    parser.add_argument('--stage-parent')
+    parser.add_argument('--stage', nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if args.stage is not None:
+        return supervised_stage(args.stage, args.stage_job, json.loads(args.stage_parent))
     if args.start:
         source_builder(args.start)
         trusted_python()
         job = Path(tempfile.mkdtemp(prefix='ustam-local-install-'))
         write_status(job, 'starting')
         with (job / 'helper.log').open('ab') as log:
-            subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--worker', str(args.start.resolve()),
+            process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--worker', str(args.start.resolve()),
                 '--job', str(job), '--home', str(args.home)], stdout=log, stderr=log, start_new_session=True)
+        save_identity(job, 'helper-process', process.pid)
         print(job)
     elif args.worker:
         worker(args.worker.resolve(), args.home, checked_job(args.job))
     elif args.status:
-        result = json.loads((checked_job(args.status) / 'status.json').read_text())
+        result = job_status(checked_job(args.status))
         print(result['phase'] + '\n' + result['detail'])
     elif args.cancel:
         (checked_job(args.cancel) / 'cancel').touch()
@@ -227,4 +349,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

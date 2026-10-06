@@ -391,8 +391,8 @@ class Settings:
                 saved = self.i.backup(self.target, path, False) if original[name] is not None else None
                 records[name] = {'backup': saved.relative_to(self.target).as_posix() if saved else None,
                                  'after': hashlib.sha256(content.encode()).hexdigest() if content is not None else None}
-            state = {'files': records, 'manifest': before}
-            old_manifest = manifest_path.read_text(encoding='utf-8')
+            old_manifest = manifest_path.read_bytes().decode('utf-8')
+            state = {'files': records, 'manifest': before, 'manifest_text': old_manifest}
             old_state = state_path.read_text(encoding='utf-8') if state_path.exists() else None
         except Exception:
             if 'stage_directory' in locals():
@@ -480,6 +480,11 @@ class Settings:
     def restore(self):
         state_path = self.path(STATE)
         state = json.loads(state_path.read_text(encoding='utf-8'))
+        # Keep the exact installation identity, including its timestamp and bytes.
+        # Older snapshots used the installer's canonical serialization.
+        restored_manifest = state.get('manifest_text', json.dumps(state['manifest'], indent=2, sort_keys=True) + '\n')
+        if not isinstance(restored_manifest, str) or json.loads(restored_manifest) != state['manifest']:
+            raise ValueError('Invalid saved install manifest')
         before_roster = self.roster(state['manifest'])
         manifest = self.i.load_manifest(self.target)
         after_roster = self.roster(manifest)
@@ -543,7 +548,7 @@ class Settings:
                 self.path(self.i.MANIFEST_RELATIVE)
                 if self.i.digest(manifest_path) != previous_manifest_sha256:
                     raise ValueError('Install manifest changed during restore')
-                self.i.save_manifest(self.target, state['manifest'], self.root, False)
+                self.i.atomic_text(manifest_path, restored_manifest, False)
                 manifest_written = self.i.digest(manifest_path)
                 self.path(STATE)
                 if self.i.digest(state_path) != hashlib.sha256(old_state.encode()).hexdigest():

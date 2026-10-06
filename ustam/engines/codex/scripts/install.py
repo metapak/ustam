@@ -12,6 +12,7 @@ import secrets
 import shutil
 import stat
 import sys
+import shlex
 import tempfile
 import tomllib
 from datetime import datetime, timezone
@@ -39,6 +40,7 @@ ROLE_FILES = {
     "fast_lookup": Path(".codex/agents/fast-lookup.toml"),
     "explorer": Path(".codex/agents/explorer.toml"),
     "researcher": Path(".codex/agents/researcher.toml"),
+    "acceptance_test_author": Path(".codex/agents/acceptance-test-author.toml"),
     "implementer": Path(".codex/agents/implementer.toml"),
     "verifier": Path(".codex/agents/verifier.toml"),
     "failure_analyst": Path(".codex/agents/failure-analyst.toml"),
@@ -68,6 +70,7 @@ BALANCED_PROFILE = {
     "fast_lookup": ("gpt-6-luna", "medium"),
     "explorer": ("gpt-6-luna", "high"),
     "researcher": ("gpt-6.1-sol", "medium"),
+    "acceptance_test_author": ("gpt-6.1-sol", "medium"),
     "implementer": ("gpt-6.1-sol", "high"),
     "verifier": ("gpt-6.1-sol", "high"),
     "failure_analyst": ("gpt-6.1-sol", "high"),
@@ -139,12 +142,24 @@ MANAGED_RELATIVE_FILES = (
     Path(".agents/skills/bounded-orchestrator/references/escalation.md"),
     Path(".agents/skills/bounded-orchestrator-ui-design/SKILL.md"),
     Path(".agents/skills/bounded-orchestrator-security-review/SKILL.md"),
+    Path(".codex/tools/work_protocol.py"),
+    Path(".codex/tools/work_protocol_core.py"),
+    Path(".codex/tools/work_protocol"),
 )
 
 ALLOWED_MANIFEST_FILES = frozenset(
     (*MANAGED_RELATIVE_FILES, *ROLE_FILES.values(), *TEAM_SLOT_FILES.values(), CONFIG_RELATIVE,
      CONFIG_EXAMPLE_RELATIVE, *EXTERNAL_BRIDGES.values())
 )
+
+
+def work_protocol_wrapper(target):
+    if getattr(sys, 'frozen', False):
+        command = [sys.executable, '--work-protocol', 'codex']
+    else:
+        command = [sys.executable, str((target / '.codex/tools/work_protocol.py').resolve())]
+    command += ['--project', str(target.resolve())]
+    return '#!/bin/sh\n# Fixed project and installer runtime; no paid call.\nexec ' + ' '.join(shlex.quote(a) for a in command) + ' "$@"\n'
 
 
 class InstallError(RuntimeError):
@@ -1206,6 +1221,10 @@ def install(
         )
 
     for relative in MANAGED_RELATIVE_FILES:
+        if relative == Path('.codex/tools/work_protocol'):
+            install_text_file(target=target, relative=relative, text=work_protocol_wrapper(target), manifest=manifest,
+                              force=force, dry_run=dry_run, messages=messages)
+            continue
         if relative == runtime_ignore:
             continue
         install_file(

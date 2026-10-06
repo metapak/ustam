@@ -9,8 +9,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-AGENTS = {"explorer", "researcher", "implementer", "verifier", "failure-analyst", "qa-operator", "reviewer", "advisor"}
+AGENTS = {"acceptance-test-author", "explorer", "researcher", "implementer", "verifier", "failure-analyst", "qa-operator", "reviewer", "advisor"}
 EXPECTED_ROUTING = {
+    "acceptance-test-author": ("sonnet", "medium"),
     "explorer": ("sonnet", "medium"),
     "researcher": ("sonnet", "medium"),
     "implementer": ("sonnet", "high"),

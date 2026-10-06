@@ -34,6 +34,98 @@ syncer = load('ustam_syncer', 'scripts/sync_ustam_distribution.py')
 
 
 class PackagingTests(unittest.TestCase):
+    def test_startup_notice_is_bounded_and_closed_on_ready_or_timeout(self):
+        from unittest.mock import Mock
+        process = Mock()
+        process.poll.return_value = None
+        for ready in (True, False):
+            notice = Mock()
+            with patch.object(launcher, 'worker_ready', return_value=ready), patch.object(launcher, 'stop_notice') as stop, patch.object(launcher.time, 'monotonic', side_effect=[0, 0, 31]), patch.object(launcher.time, 'sleep'):
+                self.assertEqual(launcher.wait_for_start(process, Path('/unused'), notice), ready)
+                stop.assert_called_once_with(notice)
+
+    def test_native_startup_early_exit_is_visible(self):
+        from unittest.mock import Mock
+        process = Mock()
+        process.poll.return_value = 0
+        process.wait.return_value = 0
+        with patch.object(launcher.sys, 'platform', 'darwin'), patch.object(launcher.sys, 'frozen', True, create=True), patch.object(launcher, 'worker_path', return_value=Path(__file__)), patch.object(launcher, 'preparing_notice', return_value=None), patch.object(launcher.subprocess, 'Popen', return_value=process), patch.object(launcher, 'alert') as alert, patch.object(launcher, 'stop_worker'):
+            self.assertEqual(launcher.main([]), 1)
+            self.assertIn('could not start', alert.call_args.args[0])
+
+    def test_readiness_rejects_foreign_urls_and_requires_worker_owned_port(self):
+        from unittest.mock import Mock
+        process = Mock(pid=12345)
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / 'log'
+            log.write_text('https://example.com\nhttp://127.0.0.1:99999\n')
+            with patch.object(launcher.subprocess, 'run') as sockets, patch.object(launcher.urllib.request, 'urlopen') as http:
+                self.assertFalse(launcher.worker_ready(process, log))
+                sockets.assert_not_called()
+                http.assert_not_called()
+            log.write_text('http://127.0.0.1:43210\n')
+            with patch.object(launcher.subprocess, 'run', return_value=Mock(stdout='n127.0.0.1:54321\n')), patch.object(launcher.urllib.request, 'urlopen') as http:
+                self.assertFalse(launcher.worker_ready(process, log))
+                http.assert_not_called()
+
+    def test_installer_dead_helper_cleanup_does_not_signal_reused_pid(self):
+        installer = load('ustam_install_pid_reuse', 'scripts/install_ustam_macos.py')
+        with tempfile.TemporaryDirectory() as directory:
+            job = Path(directory)
+            (job / 'stage-process.json').write_text(json.dumps({'pid':12345,'identity':'old creation time and command'}))
+            with patch.object(installer, 'process_identity', return_value='new unrelated process'), patch.object(installer.os, 'killpg', create=True) as kill:
+                installer.stop_recorded_stage(job)
+                kill.assert_not_called()
+
+    @unittest.skipIf(os.name == 'nt', 'Mac/POSIX installer group cleanup')
+    def test_installer_dead_helper_reports_error_and_stops_build(self):
+        installer = load('ustam_install_dead_helper', 'scripts/install_ustam_macos.py')
+        with tempfile.TemporaryDirectory(prefix="ustam helper's ") as directory:
+            job = Path(directory)
+            old_app = job / 'Applications/Ustam.app'
+            old_app.mkdir(parents=True)
+            (old_app / 'keep').write_bytes(b'original')
+            child_pid = job / 'child.pid'
+            child_code = ('import os,signal,time; from pathlib import Path; '
+                          'signal.signal(signal.SIGTERM,signal.SIG_IGN); '
+                          'Path(' + repr(str(child_pid)) + ').write_text(str(os.getpid())); time.sleep(60)')
+            stage_code = 'import subprocess,time; subprocess.Popen([' + repr(sys.executable) + ',"-c",' + repr(child_code) + ']); time.sleep(.5)'
+            script = ('import importlib.util; from pathlib import Path; '
+                      's=importlib.util.spec_from_file_location("i",' + repr(str(ROOT / 'scripts/install_ustam_macos.py')) + '); '
+                      'm=importlib.util.module_from_spec(s); s.loader.exec_module(m); '
+                      'm.write_status(Path(' + repr(str(job)) + '),"building"); '
+                      'm.run_stage([' + repr(sys.executable) + ',"-c",' + repr(stage_code) + '],Path(' + repr(str(job)) + '),Path(' + repr(str(ROOT)) + '))')
+            helper = subprocess.Popen([sys.executable, '-c', script], start_new_session=True)
+            installer.save_identity(job, 'helper-process', helper.pid)
+            try:
+                for _ in range(100):
+                    if (job / 'stage-process.json').exists() and child_pid.exists():
+                        break
+                    time.sleep(.02)
+                else:
+                    self.fail('Fixture build did not become ready')
+                stage = json.loads((job / 'stage-process.json').read_text())
+                helper.kill()
+                helper.wait(timeout=3)
+                time.sleep(.7)  # Build command exits before the next UI status poll.
+                started = time.monotonic()
+                status = installer.job_status(job)
+                self.assertEqual(status['phase'], 'error')
+                self.assertIn('build.log', status['detail'])
+                self.assertLess(time.monotonic()-started, 5)
+                for _ in range(50):
+                    if installer.process_identity(stage['pid']) is None:
+                        break
+                    time.sleep(.02)
+                self.assertIsNone(installer.process_identity(stage['pid']))
+                self.assertIsNone(installer.process_identity(int(child_pid.read_text())))
+                self.assertEqual((old_app / 'keep').read_bytes(), b'original')
+            finally:
+                if helper.poll() is None:
+                    helper.kill()
+                    helper.wait(timeout=3)
+                installer.stop_recorded_stage(job)
+
     def test_local_installer_preserves_state_and_managed_backup(self):
         from unittest.mock import Mock
         import plistlib
@@ -181,7 +273,7 @@ class PackagingTests(unittest.TestCase):
         stopped.is_set.return_value = False
         with patch.object(entry.sys, 'platform', 'darwin'), patch.object(entry.subprocess, 'Popen', return_value=process) as popen:
             entry.browser_notice('http://127.0.0.1:43210', stopped)
-        self.assertIn('http://127.0.0.1:43210', popen.call_args.args[0][-1])
+        self.assertIn('http://127.0.0.1:43210', popen.call_args.args[0][-2])
         process.terminate.assert_called_once()
         process.wait.assert_called_once_with(timeout=1)
         process.kill.assert_not_called()
@@ -236,9 +328,13 @@ class PackagingTests(unittest.TestCase):
                 manifest['engines'][provider] = {'commit': 'a'*40, 'files': {'VERSION': hashlib.sha256(b'1').hexdigest()}}
             (root / 'ustam/engine-manifest.json').write_text(json.dumps(manifest))
             (root / 'ustam/ui').mkdir()
-            for name in ('index.html','app.js','style.css'):
+            for name in ('index.html','app.js','style.css','icons.mjs'):
                 (root / 'ustam/ui' / name).write_text('')
             builder.verify_assets(root)
+            (root / 'ustam/ui/icons.mjs').unlink()
+            with self.assertRaisesRegex(ValueError, 'Missing hub UI asset: icons.mjs'):
+                builder.verify_assets(root)
+            (root / 'ustam/ui/icons.mjs').write_text('')
             (root / 'ustam/engines/codex/extra').write_text('')
             with self.assertRaisesRegex(ValueError, 'closure'):
                 builder.verify_assets(root)
@@ -302,8 +398,8 @@ class PackagingTests(unittest.TestCase):
     def test_native_launcher_no_project_picker_or_python_dependency(self):
         with patch.object(launcher.sys, 'frozen', True, create=True), patch.object(launcher, 'worker_path', return_value=Path(__file__)), patch.object(launcher.subprocess, 'Popen') as popen:
             popen.return_value.wait.return_value = 0
-            self.assertEqual(launcher.main([]), 0)
-            self.assertEqual(popen.call_args.args[0], [str(Path(__file__))])
+            self.assertEqual(launcher.main(['--no-browser']), 0)
+            self.assertEqual(popen.call_args.args[0], [str(Path(__file__)), '--no-browser'])
             self.assertEqual(popen.call_args.kwargs['stdin'], subprocess.DEVNULL)
 
     @unittest.skipUnless(os.environ.get('USTAM_FROZEN_WORKER'), 'Set USTAM_FROZEN_WORKER after building a native package')

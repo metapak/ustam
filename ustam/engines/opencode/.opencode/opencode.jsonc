@@ -34,6 +34,11 @@
         },
         {
           "action": "subagent",
+          "resource": "acceptance-test-author",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
           "resource": "implementer",
           "effect": "allow"
         },
@@ -279,6 +284,28 @@
           "action": "shell",
           "resource": "*",
           "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "acceptance-test-author": {
+      "description": "Authors acceptance packs before production implementation",
+      "mode": "subagent",
+      "steps": 34,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
         },
         {
           "action": "subagent",

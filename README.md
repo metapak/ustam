@@ -18,9 +18,15 @@ Set up the team, check the changes, and see locally recorded past usage. The set
 > [!NOTE]
 > This is an unofficial community project. It is not affiliated with or endorsed by OpenAI.
 
+## Turkish introduction
+
+[![Watch the Turkish Ustam introduction](docs/assets/ustam-trailer-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4)
+
+[Play or download the Turkish video (MP4, 55 seconds)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4). Turkish titles with original music and sound effects; no spoken narration. Usage figures shown on screen are sample data. Select the cover or MP4 link to open the video.
+
 ## Install in four steps
 
-**Mac status:** The published beta.1/beta.2 Mac downloads have unresolved first-launch issues. A locally built app was verified on one Mac; this does not establish that the public download opens. beta.3 is not published. See [the Mac notes](docs/ustam-hub.md).
+**Current release:** [1.0.0-beta.3](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.3) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.3/ustam-1.0.0-beta.3-macos-arm64.zip) · [Release notes](docs/release-ustam-v1.0.0-beta.3.md). The Mac bundle was verified locally; public-download Gatekeeper restrictions remain unresolved. Windows/Linux links below are the previous beta.2 release.
 
 1. **Download Ustam:** Choose the native application ZIP for Windows or Linux from the [1.0.0-beta.2 release](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.2) and extract it completely: [Windows](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-windows-x86_64.zip) · [Linux](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-linux-x86_64.zip).
 2. **Open:** Open **Ustam.exe** on Windows or **Ustam** on Linux. For a locally built Mac app, open **Ustam.app**. The native package includes Python. The Mac app can be moved on its own; keep the extracted Windows/Linux files together.

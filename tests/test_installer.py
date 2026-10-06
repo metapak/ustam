@@ -20,6 +20,7 @@ START_MARKER = "<!-- codex-bounded-orchestrator:start -->"
 MANIFEST = Path(".codex/.bounded-orchestrator/install.json")
 
 EXPECTED_ROLES = {
+    "acceptance_test_author": ("acceptance-test-author.toml", "gpt-6.1-sol", "medium", "workspace-write"),
     "fast_lookup": ("fast-lookup.toml", "gpt-6-luna", "medium", "read-only"),
     "explorer": ("explorer.toml", "gpt-6-luna", "high", "read-only"),
     "researcher": ("researcher.toml", "gpt-6.1-sol", "medium", "read-only"),

@@ -1,8 +1,8 @@
 # Ustam yerel hub
 
-Ustam’ı aç → Uygulamaları seç → Projeleri ekle → Değişiklikleri incele.
+Ustam’ı aç → Uygulamaları seç → Projeleri ekle → Orkestra seç → Projeye kur.
 
-Ustam, Codex, Claude Code ve OpenCode için tek yerel tarayıcı hub’ıdır. Kullanacağınız uygulamaları seçin, proje klasörlerini ekleyin; projenin ayar alanında orkestra seçin veya oluşturun. Orkestra kaydetmek yeniden kullanılabilir ayarları kaydeder; sağlayıcı görevi başlatmaz. Proje ayarlarını uygulamadan önce önerilen değişiklikleri kontrol edin.
+Ustam, Codex, Claude Code ve OpenCode için tek yerel tarayıcı hub’ıdır. Kullanacağınız uygulamaları seçin, proje klasörlerini ekleyin; projenin ayar alanında orkestra seçin veya oluşturun. Orkestra kaydetmek yeniden kullanılabilir ayarları kaydeder; sağlayıcı görevi başlatmaz. **Projeye kur** hedef dosyaları kontrol eder ve çakışmasız projelere tek işlemde kurar. Sonuçlar her proje için gösterilir. Çakışmalar ve hatalar görünür kalır; yalnızca doğrulanmış başarılı kurulumlar mevcut oturumda kurulu rozeti alır. Kurulum sohbete mesaj göndermez ve sağlayıcı görevi başlatmaz. Ana kurulum ekranında iş açıklaması veya çalışma planı istenmez.
 
 ## İş türüne göre hazır ekipler
 
@@ -25,7 +25,7 @@ Hazır ekipten önce iş türünü seçin. Her önerilen ekip keşif, uygulama, 
 
 Windows/Linux: beta.2 sürümündeki yerel ZIP’i tamamen çıkarın, **Ustam.exe** veya **Ustam** açın. Çıkarılan dosyaları birlikte tutun. Çalışma zamanı pakete dahildir; yerel paket için ayrıca Python gerekmez. Yerel derlenen Mac uygulaması tek başına taşınabilir.
 
-**Herkese açık Mac indirmesi hazır değil:** yayımlanmış beta.1/beta.2 Mac uygulamalarında ilk açılış sorunu sürüyor. Yayımlanmamış beta.3 kaynak adayı paket bütünlüğünü düzeltir; bu, indirilen uygulamanın açılabildiğini kanıtlamaz. Geliştirme Mac’inde yerel kaynak derlemesi açıldı ve kullanıcı sayfayı gördüğünü doğruladı. Bu kopyada karantina özniteliği doğal olarak yoktu; güvenlik korumaları değiştirilmedi. Karantinalı indirme test kopyası engellenmeye devam etti ve macOS Yine de Aç seçeneğini sunmadı. Karantinayı kaldırmayın, Gatekeeper’ı kapatmayın.
+**Herkese açık Mac indirmesi hazır değil:** yayımlanmış beta.1/beta.2 Mac uygulamalarında ilk açılış sorunu sürüyor. Beta.3 kaynağı ve Mac arm64 paketi paket bütünlüğünü düzeltir; bu, indirilen uygulamanın açılabildiğini kanıtlamaz. Geliştirme Mac’inde yerel kaynak derlemesi açıldı ve kullanıcı sayfayı gördüğünü doğruladı. Bu kopyada karantina özniteliği doğal olarak yoktu; güvenlik korumaları değiştirilmedi. Karantinalı indirme test kopyası engellenmeye devam etti ve macOS Yine de Aç seçeneğini sunmadı. Karantinayı kaldırmayın, Gatekeeper’ı kapatmayın.
 
 Apple Developer ID imzası ve noter onayı mevcut değil. Ad-hoc kod mührü paket bütünlüğünü doğrular; Apple’ın güvenilir dağıtım onayını sağlamaz. Yönetilen bilgisayarlarda ek kısıtlamalar olabilir.
 
@@ -54,3 +54,5 @@ Tercihler, kayıtlı projeler ve orkestralar Ustam’ın kullanıcı veri klasö
 Sağlayıcı çalışma sınırları ekip ayarlarından ayrı gösterilir. Her sağlayıcı, tam dosya listesi ve SHA-256 doğrulaması olan paketlenmiş sabit motor kullanır. Yerel `ustam/VERSION`, eski motor sürümlerinden ayrıdır. Arayüz başlatıcısı konsol worker kullanır; dondurulmuş adaptörlerin JSON stdio iletişimi korunur. Windows worker’ları gizlidir. Tarayıcı otomatik açılamazsa Ustam elle açılacak yerel adresi gösterir; sunucu çalışmaya devam eder.
 
 [Eski sağlayıcı konsolu](legacy-console.tr.md), ekran görüntüleri, on görev şablonları ve önce proje seçen başlatıcılar ileri düzey uyumluluk referansıdır. Güncel birleşik hub’dan ayrıdır.
+
+[Beta.3 sürüm notları](release-ustam-v1.0.0-beta.3.tr.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.3/ustam-1.0.0-beta.3-macos-arm64.zip). Windows/Linux yerel indirmeleri beta.2 olarak kalır.

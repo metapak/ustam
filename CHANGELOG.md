@@ -1,5 +1,9 @@
 # Changelog
 
+## Ustam 1.0.0-beta.3 — 2026-10-06
+
+Current shared hub, bounded manual work protocol, acceptance-test author, ownership/rollback fixes, provider parity, cached usage, locale/pending UI, SVG icons, Mac lifecycle/package improvements and Turkish trailer. [Full English notes](docs/release-ustam-v1.0.0-beta.3.md) · [Türkçe sürüm notları](docs/release-ustam-v1.0.0-beta.3.tr.md). Mac arm64 package only; Windows/Linux remain beta.2.
+
 ## 0.6.0
 
 - Added truthful local Codex usage reporting, a quota-saver profile, explicit local evaluation, and richer retry-aware task history.

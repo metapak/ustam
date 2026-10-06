@@ -33,7 +33,7 @@ def verify_assets(root=ROOT):
                 raise ValueError('Unsafe engine asset: ' + relative)
             if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
                 raise ValueError('Engine asset hash mismatch: ' + relative)
-    for name in ('index.html', 'app.js', 'style.css'):
+    for name in ('index.html', 'app.js', 'style.css', 'icons.mjs'):
         if not (root / 'ustam/ui' / name).is_file():
             raise ValueError('Missing hub UI asset: ' + name)
     return manifest
@@ -139,6 +139,8 @@ def build(output_dir, rebuild_engines=True):
     data = []
     for name in ('ui', 'engines', 'engine-manifest.json'):
         data += ['--add-data', f'{ROOT / "ustam" / name}:ustam/{name}' if name != 'engine-manifest.json' else f'{ROOT / "ustam" / name}:ustam']
+    # The controller receipt hashes its own source; PYZ modules have no source file.
+    data += ['--add-data', f'{ROOT / "ustam/protocol.py"}:ustam']
     hidden = [item for module in engine_stdlib_modules() for item in ('--hidden-import', module)]
     subprocess.run([*common, *hidden, '--name', 'UstamWorker', '--console', '--collect-submodules', 'ustam', *data,
                     str(ROOT / 'launchers/ustam_worker.py')], check=True)

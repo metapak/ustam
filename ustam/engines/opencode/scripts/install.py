@@ -13,6 +13,7 @@ import secrets
 import shutil
 import stat
 import sys
+import shlex
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,7 +24,7 @@ MANIFEST = Path(".opencode/.bounded-orchestrator/install.json")
 BACKUPS = Path(".opencode/.bounded-orchestrator/backups")
 START = "<!-- opencode-bounded-orchestrator:start -->"
 END = "<!-- opencode-bounded-orchestrator:end -->"
-ROLES = ("owner", "fast-lookup", "explorer", "researcher", "implementer", "verifier", "failure-analyst", "qa-operator", "reviewer", "advisor")
+ROLES = ("owner", "fast-lookup", "explorer", "researcher", "acceptance-test-author", "implementer", "verifier", "failure-analyst", "qa-operator", "reviewer", "advisor")
 TEAM_ROLES = ROLES[1:]
 MAX_HELPERS = 50
 SLOT = re.compile(r"\.opencode/agents/helper-(?:0[1-9]|[1-4][0-9]|50)\.md\Z")
@@ -35,12 +36,24 @@ PROFILES = {
     "economy": {"owner":24,"fast-lookup":7,"explorer":14,"researcher":14,"implementer":22,"verifier":13,"failure-analyst":14,"qa-operator":13,"reviewer":14,"advisor":16},
     "quota-saver": {"owner":18,"fast-lookup":5,"explorer":10,"researcher":10,"implementer":16,"verifier":9,"failure-analyst":10,"qa-operator":9,"reviewer":10,"advisor":12},
 }
+for _profile in PROFILES.values():
+    _profile["acceptance-test-author"] = _profile["verifier"]
+
 MANAGED = [Path(".opencode/opencode.jsonc"), Path(".opencode/bounded-orchestrator.eval.example.json"), Path(".opencode/.candidate/.gitignore"), Path(".opencode/.bounded-orchestrator/.gitignore")]
 MANAGED += [Path(f".opencode/agents/{role}.md") for role in ROLES]
-MANAGED += [Path(".opencode/tools") / name for name in ("candidate.py","ledger.py","usage_report.py","local_eval.py","console.py","team_editor.py","console.html","console.css","console.js","orchestra-actors.svg")]
+MANAGED += [Path(".opencode/tools") / name for name in ("work_protocol.py","work_protocol_core.py","work_protocol","candidate.py","ledger.py","usage_report.py","local_eval.py","console.py","team_editor.py","console.html","console.css","console.js","orchestra-actors.svg")]
 MANAGED += [Path(".opencode/skills/bounded-orchestrator/SKILL.md"), Path(".opencode/skills/bounded-orchestrator/references/task-contract.md"), Path(".opencode/skills/bounded-orchestrator/references/review-protocol.md"), Path(".opencode/skills/bounded-orchestrator/references/escalation.md")]
 ALLOWED_MANIFEST_FILES={path.as_posix() for path in MANAGED}
 IGNORE_SENTINELS={Path(".opencode/.candidate/.gitignore"),Path(".opencode/.bounded-orchestrator/.gitignore")}
+
+
+def work_protocol_wrapper(target):
+    if getattr(sys, 'frozen', False):
+        command = [sys.executable, '--work-protocol', 'opencode']
+    else:
+        command = [sys.executable, str((target / '.opencode/tools/work_protocol.py').resolve())]
+    command += ['--project', str(target.resolve())]
+    return '#!/bin/sh\n# Fixed project and installer runtime; no paid call.\nexec ' + ' '.join(shlex.quote(a) for a in command) + ' "$@"\n'
 
 
 class InstallError(RuntimeError): pass
@@ -235,7 +248,7 @@ def configured_template(profile: str, default_model: str | None, role_models: di
         model = selector(model); config["agents"][role]["model"] = model; selectors.append(model)
     if team:
         owner=config["agents"]["owner"]
-        owner["permissions"]=[owner["permissions"][0],owner["permissions"][1],*[{"action":"subagent","resource":slot_name(index),"effect":"allow"} for index in range(1,len(team)+1)],*owner["permissions"][-2:]]
+        owner["permissions"]=[owner["permissions"][0],owner["permissions"][1],{"action":"subagent","resource":"acceptance-test-author","effect":"allow"},*[{"action":"subagent","resource":slot_name(index),"effect":"allow"} for index in range(1,len(team)+1)],*owner["permissions"][-2:]]
         for index,item in enumerate(team,1):
             slot=slot_name(index); role=item["role"]
             agent=copy.deepcopy(config["agents"][role]); agent["steps"]=steps[role]
@@ -256,6 +269,7 @@ def configured_agent(role: str, profile: str, role_models: dict[str,str], team: 
     if role=="owner" and team:
         start=text.index("permissions:"); end=text.index("---",start)
         rules='permissions:\n  - { action: "*", resource: "*", effect: deny }\n  - { action: subagent, resource: "*", effect: deny }\n'
+        rules+='  - { action: subagent, resource: acceptance-test-author, effect: allow }\n'
         rules+=''.join(f'  - {{ action: subagent, resource: {slot_name(index)}, effect: allow }}\n' for index in range(1,len(team)+1))
         rules+='  - { action: skill, resource: bounded-orchestrator, effect: allow }\n  - { action: question, resource: "*", effect: allow }\n'
         text=text[:start]+rules+text[end:]
@@ -388,7 +402,8 @@ def install(target: Path, profile: str, replace: bool, dry_run: bool, default_mo
     for relative in [*MANAGED,*dynamic]:
         ensure_safe_parent(target,relative)
         destination=target/relative
-        if relative==Path('.opencode/opencode.jsonc'): data=config_data
+        if relative==Path('.opencode/tools/work_protocol'): data=work_protocol_wrapper(target).encode()
+        elif relative==Path('.opencode/opencode.jsonc'): data=config_data
         elif relative==sentinel_relative: data=b'*\n!.gitignore\n'  # Runtime sentinel bytes must be canonical even after a CRLF checkout.
         elif relative in dynamic: data=configured_slot(int(relative.stem[-2:]),team[int(relative.stem[-2:])-1])
         elif relative.parent==Path('.opencode/agents'): data=configured_agent(relative.stem,profile,role_models,team)

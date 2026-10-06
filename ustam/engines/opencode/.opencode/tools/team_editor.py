@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy, hashlib, json, os, re, shutil, time
 from pathlib import Path
 
-ROLES=('fast-lookup','explorer','researcher','implementer','verifier','failure-analyst','qa-operator','reviewer','advisor')
+ROLES=('acceptance-test-author','fast-lookup','explorer','researcher','implementer','verifier','failure-analyst','qa-operator','reviewer','advisor')
 SELECTOR=re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._/-]*(?:#[A-Za-z0-9][A-Za-z0-9._-]*)?\Z')
 DUTY=re.compile(r'[A-Za-z0-9À-ž _.,:;!?()/-]{0,80}\Z')
 MAX_HELPERS=50
@@ -14,6 +14,9 @@ PROFILES={
  'economy':[24,7,14,14,22,13,14,13,14,16],
  'quota-saver':[18,5,10,10,16,9,10,9,10,12],
 }
+for _name, _steps in list(PROFILES.items()):
+    PROFILES[_name] = (_steps[0], _steps[5], *_steps[1:])
+
 ALL_ROLES=('owner',*ROLES)
 class TeamError(ValueError): pass
 

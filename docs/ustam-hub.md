@@ -1,8 +1,8 @@
 # Ustam local hub
 
-Open Ustam → Select apps → Add projects → Review changes.
+Open Ustam → Select apps → Add projects → Choose an orchestra → Install in project.
 
-Ustam is one local browser hub for Codex, Claude Code and OpenCode. Select the apps you use, add project folders, then choose or create an orchestra in that project's setup area. Saving an orchestra saves reusable configuration; it does not start a provider job. Check the proposed project changes before applying them.
+Ustam is one local browser hub for Codex, Claude Code and OpenCode. Select the apps you use, add project folders, then choose or create an orchestra in that project's setup area. Saving an orchestra saves reusable configuration; it does not start a provider job. Select **Install in project** to validate the target files and install into projects without conflicts in one action. Results appear for each project. Conflicts and errors remain visible; only confirmed successful installations receive an installed badge during the current session. Installation sends no chat messages and starts no provider jobs. The main setup screen requires no work description or work plan.
 
 ## Ready teams by work type
 
@@ -21,11 +21,13 @@ Choose the work type before a ready team. Every suggested team includes explorat
 
 Suggestions use supported roles and models from the selected provider's catalog. An unavailable specialist can reduce the count; missing models require completion before saving. You can edit the team, and changing the work type does not silently overwrite your edits. These counts describe prepared configuration, not a promise that every helper runs simultaneously. OpenCode currently dispatches its four supported execution roles; the hub runs helpers one at a time.
 
+[Beta.3 release notes](release-ustam-v1.0.0-beta.3.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.3/ustam-1.0.0-beta.3-macos-arm64.zip). Windows/Linux native downloads remain beta.2.
+
 ## Native installation
 
 Windows/Linux: extract the complete native ZIP from the beta.2 release, then open **Ustam.exe** or **Ustam**. Keep the extracted files together. The runtime is bundled; Python is not a separate requirement for native packages. The native Mac app is self-contained when built locally.
 
-**Mac public download is not ready:** published beta.1/beta.2 Mac apps have unresolved first-launch problems. The unpublished beta.3 source candidate repairs package integrity, but this does not establish that a downloaded app opens. A local source build opened on the development Mac and the user confirmed seeing the page. Its quarantine attribute was naturally absent; no security protections were changed. The quarantine-marked downloaded test copy remained blocked, and macOS did not offer Open Anyway. Do not remove quarantine or disable Gatekeeper.
+**Mac public download is not ready:** published beta.1/beta.2 Mac apps have unresolved first-launch problems. The beta.3 source and Mac arm64 package repair package integrity, but this does not establish that a downloaded app opens. A local source build opened on the development Mac and the user confirmed seeing the page. Its quarantine attribute was naturally absent; no security protections were changed. The quarantine-marked downloaded test copy remained blocked, and macOS did not offer Open Anyway. Do not remove quarantine or disable Gatekeeper.
 
 Apple Developer ID signing and notarization are unavailable. An ad-hoc code seal verifies package integrity; it does not confer Apple's trusted-distribution approval. Managed computers can impose additional restrictions.
 

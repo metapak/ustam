@@ -42,6 +42,71 @@ class HubTests(unittest.TestCase):
     def tearDown(self): self.hub.close(); self.temp.cleanup()
     def preview(self):
         return self.hub.batch('preview', {'provider':'codex', 'project_ids':[self.ident], 'payload':{}})['results'][0]['preview_id']
+    def test_http_usage_preserves_typed_index_timeout_without_generic_retry_code(self):
+        from ustam.adapters import AdapterError
+        import hashlib
+        config=self.target/'.codex/config.toml';config.parent.mkdir();config.write_text('fixture')
+        manifest=self.target/'.codex/.bounded-orchestrator/install.json';manifest.parent.mkdir()
+        manifest.write_text(json.dumps({'schema':1,'installed_utc':'2026-01-01T00:00:00Z','files':{'.codex/config.toml':{'owned':True,'sha256':hashlib.sha256(config.read_bytes()).hexdigest()}}}))
+        server = UstamServer(('127.0.0.1', 0), self.hub)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            for code, status, result_code in (('usage_index_timeout', 408, 'usage_index_timeout'), ('adapter_error', 400, 'invalid_request'), ('bounds',413,'bounds')):
+                with patch.object(self.adapter, 'usage', side_effect=AdapterError('bounded timeout', code=code)):
+                    conn = http.client.HTTPConnection(*server.server_address, timeout=3)
+                    conn.request('GET', '/api/usage?project_id='+self.ident+'&provider=codex')
+                    response = conn.getresponse()
+                    self.assertEqual(response.status, status)
+                    self.assertEqual(json.loads(response.read())['error']['code'], result_code)
+                    conn.close()
+        finally:
+            server.shutdown(); server.server_close(); thread.join()
+
+    def test_http_response_accepts_large_result_and_rejects_over16mib(self):
+        from ustam import server as server_module
+        self.assertEqual(server_module.MAX_BODY,1024*1024)
+        server=UstamServer(('127.0.0.1',0),self.hub);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            for size,expected in ((5184501,200),(server_module.MAX_RESPONSE+1,413)):
+                result={'fixture':'x'*size}
+                with patch.object(self.hub,'bootstrap',return_value=result):
+                    conn=http.client.HTTPConnection(*server.server_address,timeout=5);conn.request('GET','/api/bootstrap');response=conn.getresponse();body=json.loads(response.read());conn.close()
+                self.assertEqual(response.status,expected)
+                if expected==200:self.assertEqual(len(body['fixture']),size)
+                else:self.assertEqual(body['error']['code'],'bounds');self.assertNotIn('fixture',body)
+        finally:server.shutdown();server.server_close();thread.join()
+
+    def test_worker_bounds_survives_session_and_http_usage(self):
+        import hashlib, io, queue
+        from unittest.mock import Mock
+        from ustam import adapter_worker
+        from ustam.adapters import _Session
+        config=self.target/'.codex/config.toml';config.parent.mkdir();config.write_text('fixture')
+        manifest=self.target/'.codex/.bounded-orchestrator/install.json';manifest.parent.mkdir()
+        manifest.write_text(json.dumps({'schema':1,'installed_utc':'2026-01-01T00:00:00Z','files':{'.codex/config.toml':{'owned':True,'sha256':hashlib.sha256(config.read_bytes()).hexdigest()}}}))
+        request={'reqid':'a'*32,'method':'usage','target':str(self.target),'params':{}}
+        worker=Mock(provider='codex',module=SimpleNamespace(usage=SimpleNamespace(UsageIndexTimeout=ValueError)))
+        worker.call.return_value={'oversize':'x'*adapter_worker.MAX_RESPONSE}
+        output=io.BytesIO()
+        with patch.object(adapter_worker,'Engine',return_value=worker),patch.object(sys,'stdin',SimpleNamespace(buffer=io.BytesIO((json.dumps(request)+'\n').encode()))),patch.object(sys,'stdout',SimpleNamespace(buffer=output)):
+            self.assertEqual(adapter_worker.main(['codex']),0)
+        session=_Session.__new__(_Session);session.timeout=2;session.lock=threading.Lock();session.responses=queue.Queue()
+        session.process=SimpleNamespace(stdin=io.BytesIO(),stdout=io.BytesIO(output.getvalue()))
+        session._read()
+        server=UstamServer(('127.0.0.1',0),self.hub);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+        try:
+            with patch.object(self.adapter,'usage',side_effect=lambda provider,target:session.request('usage',str(target),{})),patch('ustam.adapters.uuid.uuid4',return_value=SimpleNamespace(hex='a'*32)):
+                conn=http.client.HTTPConnection(*server.server_address,timeout=5)
+                try:
+                    conn.request('GET','/api/usage?project_id='+self.ident+'&provider=codex')
+                    response=conn.getresponse();body=json.loads(response.read())
+                finally:conn.close()
+            self.assertEqual(response.status,413)
+            self.assertEqual(body['error']['code'],'bounds')
+            self.assertNotIn('result',body)
+        finally:server.shutdown();server.server_close();thread.join()
+
     def test_preview_bound_consumed_and_stale(self):
         ident = self.preview()
         self.assertTrue(self.hub.apply({'preview_ids':[ident]})['results'][0]['ok'])

@@ -6,7 +6,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from .adapters import AdapterError
+
 MAX_BODY = 1024 * 1024
+MAX_RESPONSE = 16 * 1024 * 1024
 
 class UstamServer(ThreadingHTTPServer):
     daemon_threads = True
@@ -29,6 +32,9 @@ class Handler(BaseHTTPRequestHandler):
         pass
     def reply(self, status, value):
         content = json.dumps(value, ensure_ascii=False).encode()
+        if len(content) > MAX_RESPONSE:
+            status=413
+            content=json.dumps({'ok':False,'error':{'code':'bounds','message':'API response exceeded16MiB bounds'}}).encode()
         self.send_response(status)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(content)))
@@ -53,6 +59,8 @@ class Handler(BaseHTTPRequestHandler):
             if request.path == '/api/bootstrap':
                 result = hub.bootstrap()
                 result['csrf'] = self.server.csrf
+            elif request.path == '/api/works':
+                result = hub.work_list()
             elif request.path == '/api/jobs':
                 result = {'jobs': hub.jobs.list() if hub.jobs else []}
             elif request.path.startswith('/api/jobs/'):
@@ -65,12 +73,16 @@ class Handler(BaseHTTPRequestHandler):
                 target = hub.targets([ident])[0]['path'] if ident else None
                 if request.path == '/api/usage' and target is None:
                     raise ValueError('Select a project for usage')
-                result = {'result': getattr(hub.adapters, request.path.rsplit('/', 1)[1])(provider, target)}
+                result = {'result': hub.usage(provider, ident) if request.path == '/api/usage' else hub.adapters.models(provider, target)}
             elif request.path.startswith('/api/'):
                 return self.error_reply(404, 'not_found', 'Unknown API route')
             else:
                 return self.static(request.path)
             self.reply(200, {'ok': True, **result})
+        except AdapterError as error:
+            indexing = error.code == 'usage_index_timeout'
+            bounded=error.code=='bounds'
+            self.error_reply(408 if indexing else 413 if bounded else 400, error.code if indexing or bounded else 'invalid_request', str(error))
         except (ValueError, KeyError, TypeError) as error:
             self.error_reply(400, 'invalid_request', str(error))
         except Exception:
@@ -96,7 +108,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError('JSON object required')
             hub = self.server.hub
             path = urlsplit(self.path).path
-            handlers = {'/api/projects/pick': hub.pick_project_directory, '/api/projects': hub.projects, '/api/orchestras': hub.orchestras, '/api/defaults': hub.defaults, '/api/preview': lambda b: hub.batch('preview', b), '/api/apply': hub.apply, '/api/restore': lambda b: hub.batch('restore', b), '/api/usage': lambda b: hub.batch('usage', b), '/api/jobs': hub.job_action}
+            handlers = {'/api/works': hub.work_action, '/api/projects/pick': hub.pick_project_directory, '/api/projects': hub.projects, '/api/orchestras': hub.orchestras, '/api/defaults': hub.defaults, '/api/preview': lambda b: hub.batch('preview', b), '/api/apply': hub.apply, '/api/restore': lambda b: hub.batch('restore', b), '/api/usage': lambda b: hub.batch('usage', b), '/api/jobs': hub.job_action}
             if path not in handlers:
                 return self.error_reply(404, 'not_found', 'Unknown API route')
             result = handlers[path](body)

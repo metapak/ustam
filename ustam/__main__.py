@@ -22,7 +22,7 @@ def browser_notice(origin, stopped):
     message = 'Tarayıcı açılamadı / Browser could not open.\nBu adresi tarayıcınızda açın / Open this address in your browser:\n' + origin
     if sys.platform == 'darwin':
         process = subprocess.Popen(['/usr/bin/osascript', '-e',
-            'on run argv\ndisplay alert "Ustam" message (item 1 of argv) giving up after 60\nend run', message])
+            'on run argv\nset choice to display dialog (item 1 of argv) with title "Ustam" buttons {"Kapat / Close", "Tarayıcıda aç / Open browser"} default button 2 giving up after 60\nif gave up of choice is false and button returned of choice is "Tarayıcıda aç / Open browser" then open location (item 2 of argv)\nend run', message, origin])
         try:
             deadline = time.monotonic() + 60
             while process.poll() is None and time.monotonic() < deadline:
@@ -45,6 +45,11 @@ def browser_notice(origin, stopped):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == '--work-protocol':
+        if len(argv) < 2:
+            raise SystemExit('Work protocol provider required')
+        from .native_protocol import main as work_main
+        return work_main(argv[1], argv[2:])
     if '--adapter' in argv:
         # This branch must execute before UI/server setup, including frozen builds.
         index = argv.index('--adapter')

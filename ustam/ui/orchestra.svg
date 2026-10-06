@@ -78,7 +78,7 @@
   <path d="M75 0v79m130-79v76m130-76v78m130-78v76m130-76v78m130-78v76m130-76v79" stroke="#411d22" stroke-width="4" opacity=".45"/>
   <path d="M0 334q480-110 960 0v106H0Z" fill="url(#floor)" stroke="#bd8860" stroke-width="3"/>
   <path d="M80 388q400-45 800 0" fill="none" stroke="#c89260" opacity=".35" stroke-width="2"/>
-  <use xlink:href="#conductor" x="55" y="83" width="265" height="330" filter="url(#shadow)"/>
+  <use xlink:href="#conductor-active" x="55" y="83" width="265" height="330" filter="url(#shadow)"/>
   <use xlink:href="#musician" x="450" y="172" width="118" height="185" filter="url(#shadow)"/>
   <use xlink:href="#musician" x="590" y="150" width="118" height="185" filter="url(#shadow)"/>
   <use xlink:href="#musician" x="730" y="174" width="118" height="185" filter="url(#shadow)"/>

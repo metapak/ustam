@@ -14,6 +14,7 @@ import time
 import tomllib
 
 MAX_MESSAGE = 1024 * 1024
+MAX_RESPONSE = 16 * 1024 * 1024
 BASE = Path(__file__).resolve().parent
 sys.dont_write_bytecode = True
 PROVIDERS = ('codex', 'claude', 'opencode')
@@ -203,10 +204,10 @@ class Engine:
         if method == 'inspect': return self.inspect()
         if method == 'models': return self.models()
         if method == 'usage':
-            if self.provider == 'codex': return self.backend.report({})
+            if self.provider == 'codex': return self.backend.report({'project': [str(self.target)]})
             usage = importlib.import_module('usage_report')
             if self.provider == 'claude': return usage.report(None, history=self.backend.usage_history(), project_hash=self.backend.project_hash())
-            return usage.collect(root=self.target)
+            return usage.collect_breakdown(root=self.target, project=str(self.target))
         if method == 'preview':
             native = self.map_payload(params)
             if self.provider == 'codex': result = self.backend.preview(native)
@@ -259,9 +260,11 @@ def main(argv=None):
                 result = engine.call(message['method'], message['target'], message['params'])
             response = {'reqid': reqid, 'ok': True, 'result': result}
         except Exception as exc:
-            response = {'reqid': reqid, 'ok': False, 'error': {'code': 'adapter_error', 'message': scrub(str(exc))}}
+            timeout_type = getattr(getattr(engine.module, 'usage', None), 'UsageIndexTimeout', ())
+            code = 'usage_index_timeout' if engine.provider == 'codex' and isinstance(exc, timeout_type) else 'adapter_error'
+            response = {'reqid': reqid, 'ok': False, 'error': {'code': code, 'message': scrub(str(exc))}}
         data = (json.dumps(response, allow_nan=False) + '\n').encode()
-        if len(data) > MAX_MESSAGE:
+        if len(data) > MAX_RESPONSE:
             data = (json.dumps({'reqid': reqid, 'ok': False, 'error': {'code': 'bounds', 'message': 'Adapter result exceeded bounds'}}) + '\n').encode()
         sys.stdout.buffer.write(data)
         sys.stdout.buffer.flush()

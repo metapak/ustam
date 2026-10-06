@@ -61,3 +61,7 @@ nickname_candidates = ["Aegis", "Sentinel"]
 description = "Optional read-only advisor for one high-risk architecture, security, or data-integrity decision owned by the root."
 config_file = "./agents/advisor.toml"
 nickname_candidates = ["Oracle", "Keystone"]
+
+[agents.acceptance_test_author]
+description = "Authors acceptance packs before production implementation."
+config_file = "./agents/acceptance-test-author.toml"

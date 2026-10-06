@@ -1,0 +1,3 @@
+#!/bin/sh
+# Installer renders a fixed native worker or Python bridge for this project.
+exit 2

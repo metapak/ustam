@@ -11,6 +11,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 
 EXPECTED_AGENTS: dict[str, dict[str, str]] = {
+    "acceptance-test-author.toml": {"name": "acceptance_test_author", "model": "gpt-6.1-sol", "effort": "medium", "sandbox": "workspace-write"},
     "fast-lookup.toml": {
         "name": "fast_lookup",
         "model": "gpt-6-luna",

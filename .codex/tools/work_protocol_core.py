@@ -11,11 +11,14 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
+import sys
 import subprocess
 import tempfile
 import threading
 import time
 import uuid
+import unicodedata
 from contextlib import contextmanager
 
 SCHEMA = 1
@@ -163,7 +166,10 @@ def contract(value):
     for cmd in commands:
         if not isinstance(cmd, list) or not 1 <= len(cmd) <= 30 or any(not isinstance(a, str) or not a or len(a) > 500 for a in cmd):
             raise ProtocolError('Commands must be explicit argv arrays')
-    return {'scope': value['scope'].strip(), 'criteria': criteria, 'files': [relative(f) for f in files], 'commands': commands}
+    normalized = [relative(f) for f in files]
+    if len(set(normalized)) != len(normalized):
+        raise ProtocolError('Exclusive normalized file ownership required')
+    return {'scope': value['scope'].strip(), 'criteria': criteria, 'files': normalized, 'commands': commands}
 
 
 def pack(value, c):
@@ -367,9 +373,7 @@ class WorkProtocol:
                 raise ProtocolError('Project directory required')
             ident = uuid.uuid4().hex
             c = contract(p.get('contract'))
-            for other in data['works'].values():
-                if other['path'] == str(root) and other['status'] not in ('applied', 'cancelled') and set(c['files']) & set(other['contract']['files']):
-                    raise ProtocolError('Another work owns these files')
+            self._exclusive(data, root, c['files'])
             w = {'id': ident, 'project_id': p['project_id'], 'path': str(root), 'provider': provider,
                  'version': 1, 'contract': c, 'contract_hash': digest(c), 'approved_hash': None, 'approval_required': bool(c['commands']), 'approval_basis': 'pending_extension' if c['commands'] else 'standing_policy',
                  'policy_hash': digest({'schema': 1, 'operations': ['isolated_prepare', 'deterministic_artifact_check'], 'commands': [], 'main_writes': False}),
@@ -387,6 +391,7 @@ class WorkProtocol:
             if action == 'revise':
                 c = contract(p.get('contract'))
                 if digest(c) != w['contract_hash']:
+                    self._exclusive(data, w['path'], c['files'], w['id'])
                     if w['workspace']:
                         raise ProtocolError('Workspace exists; publish a new bounded work instead of expanding active ownership')
                     w.update(contract=c, contract_hash=digest(c), approved_hash=None, version=w['version'] + 1,
@@ -560,25 +565,54 @@ class WorkProtocol:
                     raise ProtocolError('Receipt test pack binding mismatch')
                 self._receipt_tools(result)
                 self._receipt_tools(integration)
-                if integration.get('status') != 'passed' or integration.get('candidate_hash') != w['candidate']['hash'] or integration.get('main_hash') != digest(snapshot(w['path'])):
+                originals = {name: self._file_identity(w['path'], name) for name in integration.get('files', [])}
+                main = snapshot(w['path'])
+                for name, identity in originals.items():
+                    observed = {'sha256': hashlib.sha256(identity[0]).hexdigest(), 'mode': identity[1]} if identity else None
+                    if observed != main['files'].get(name):
+                        raise ProtocolError('Main changed during apply inspection; user changes retained')
+                if integration.get('status') != 'passed' or integration.get('candidate_hash') != w['candidate']['hash'] or integration.get('main_hash') != digest(main):
                     raise ProtocolError('Combined tree check stale; revalidate before apply')
                 if p.get('integration_hash') != digest(integration) or p.get('approve') is not True:
                     raise ProtocolError('One explicit apply approval must bind combined tree evidence')
                 changed = integration['files']
                 w['status'] = 'applying'
                 atomic(self.path, data)
-                originals = {name: (safe_file(w['path'], name).read_bytes(), safe_file(w['path'], name).stat().st_mode & 0o777) if safe_file(w['path'], name).exists() else None for name in changed}
+                # Private recovery bytes survive even if an external edit prevents rollback.
+                recovery = Path(tempfile.mkdtemp(prefix='apply-recovery-', dir=self.directory))
+                manifest = {}
+                for index, (name, identity) in enumerate(originals.items()):
+                    backup = str(index)
+                    manifest[name] = {'backup': backup if identity else None, 'mode': identity[1] if identity else None}
+                    if identity is not None:
+                        fd = os.open(recovery / backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                        with os.fdopen(fd, 'wb') as out:
+                            out.write(identity[0])
+                            out.flush()
+                            os.fsync(out.fileno())
+                atomic(recovery / 'manifest.json', manifest)
+                self._apply_journal = {}
+                self._apply_originals = originals
                 try:
                     self._copy_changes(w, w['path'], changed)
-                except BaseException:
-                    for name, content in originals.items():
-                        dest = safe_file(w['path'], name)
-                        if content is None:
-                            dest.unlink(missing_ok=True)
-                        else:
-                            dest.write_bytes(content[0])
-                            dest.chmod(content[1])
+                except BaseException as error:
+                    preserved = []
+                    for name, written in self._apply_journal.items():
+                        try:
+                            if self._file_identity(w['path'], name) != written:
+                                preserved.append(name)
+                                continue
+                            self._restore_original(w['path'], name, originals[name], written)
+                        except (OSError, ProtocolError):
+                            preserved.append(name)
+                    reason = ('Intervening changes or unsafe paths preserved: ' + ', '.join(preserved)) if preserved else 'Controller writes rolled back'
+                    w.update(status='needs_attention', result=None, integration=None,
+                             message='Apply interrupted: ' + str(error)[:500] + '; ' + reason + '; originals retained at ' + str(recovery))
+                    atomic(self.path, data)
                     raise
+                finally:
+                    del self._apply_journal
+                    del self._apply_originals
                 w.update(status='applied', result={'status': 'applied', 'candidate_hash': w['candidate']['hash'], 'integration_hash': digest(integration), 'files': changed})
             elif action == 'cancel':
                 w.update(status='cancelled', result=None)
@@ -587,11 +621,132 @@ class WorkProtocol:
                     raise ProtocolError('Only cancelled work resumes; interrupted operations require inspection')
                 if w['workspace'] and 'initial_files' not in w:
                     raise ProtocolError('Preparation interrupted; inspect retained workspace before publishing new work')
+                self._exclusive(data, w['path'], w['contract']['files'], w['id'])
                 w.update(status='implementing' if w['workspace'] else 'contract', result=None)
             else:
                 raise ProtocolError('Unknown local protocol action')
         self.event(w, action)
         return w
+
+    @staticmethod
+    def _case_sensitive(directory):
+        if sys.platform == 'darwin':
+            # Darwin SDK sys/unistd.h: _PC_CASE_SENSITIVE = 11. Python's
+            # pathconf_names does not expose this filesystem capability name.
+            value = os.pathconf(directory, 11)
+            if value not in (0, 1):
+                raise ProtocolError('Cannot determine filesystem case sensitivity')
+            return bool(value)
+        if os.name == 'nt':
+            import ctypes
+            from ctypes import wintypes
+            kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+            create = kernel.CreateFileW
+            create.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.c_void_p, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+            create.restype = wintypes.HANDLE
+            query = kernel.GetFileInformationByHandleEx
+            query.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
+            query.restype = wintypes.BOOL
+            close = kernel.CloseHandle
+            close.argtypes = [wintypes.HANDLE]
+            close.restype = wintypes.BOOL
+            handle = create(str(directory), 0x80, 7, None, 3, 0x02000000, None)
+            if handle == wintypes.HANDLE(-1).value:
+                raise ProtocolError('Cannot inspect directory case sensitivity')
+            try:
+                flags = wintypes.DWORD()
+                if not query(handle, 23, ctypes.byref(flags), ctypes.sizeof(flags)):
+                    raise ProtocolError('Directory case sensitivity query unsupported')
+                return bool(flags.value & 1)
+            finally:
+                close(handle)
+        return True
+
+    @classmethod
+    def _ownership_keys(cls, root, files):
+        result = set()
+        for name in files:
+            current = root
+            directory = root
+            normalized = []
+            for component in Path(relative(name)).parts:
+                if current.is_dir():
+                    directory = current
+                key = component if cls._case_sensitive(directory) else component.casefold()
+                # APFS/HFS+ aliases canonical Unicode forms even for future files.
+                # Conservatively overlap these forms on macOS mounts; raw Linux
+                # and Windows names retain their distinct Unicode spellings.
+                normalized.append(unicodedata.normalize('NFD', key) if sys.platform == 'darwin' else key)
+                current = current / component
+            result.add(('path', '/'.join(normalized)))
+            try:
+                info = current.stat()
+            except FileNotFoundError:
+                continue
+            result.add(('inode', info.st_dev, info.st_ino))
+        return result
+
+    @classmethod
+    def _exclusive(cls, data, root, files, ident=None):
+        root = Path(root).resolve()
+        root_info = root.stat()
+        owned = set()
+        for name in files:
+            keys = cls._ownership_keys(root, [name])
+            if owned & keys:
+                raise ProtocolError('Exclusive normalized file ownership required')
+            owned.update(keys)
+        for other in data['works'].values():
+            if other['id'] == ident or other['status'] in ('applied', 'cancelled'):
+                continue
+            other_root = Path(other['path']).resolve()
+            try:
+                info = other_root.stat()
+            except FileNotFoundError:
+                continue
+            if (info.st_dev, info.st_ino) == (root_info.st_dev, root_info.st_ino) and owned & cls._ownership_keys(other_root, other['contract']['files']):
+                raise ProtocolError('Another work owns these files')
+
+    @staticmethod
+    def _file_identity(root, name):
+        path = safe_file(root, name)
+        try:
+            fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
+        except FileNotFoundError:
+            return None
+        with os.fdopen(fd, 'rb') as source:
+            before = os.fstat(source.fileno())
+            if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_FILE:
+                raise ProtocolError('Unsupported recovery file')
+            content = source.read(MAX_FILE + 1)
+            after = os.fstat(source.fileno())
+        current = path.lstat()
+        if len(content) > MAX_FILE or (before.st_size, before.st_mtime_ns, before.st_ctime_ns, before.st_mode) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns, after.st_mode) or stat.S_ISLNK(current.st_mode) or (current.st_dev, current.st_ino) != (after.st_dev, after.st_ino):
+            raise ProtocolError('File changed during recovery inspection')
+        return (content, after.st_mode & 0o777, after.st_dev, after.st_ino)
+
+    def _restore_original(self, root, name, original, written):
+        dest = safe_file(root, name)
+        # These comparisons detect observed edits/replacements. An external writer
+        # can still race the final replace/unlink: project files are not OS-locked.
+        if original is None:
+            if self._file_identity(root, name) != written:
+                raise ProtocolError('File changed before rollback')
+            dest.unlink(missing_ok=True)
+            return
+        fd, filename = tempfile.mkstemp(prefix='.ustam-rollback-', dir=dest.parent)
+        try:
+            with os.fdopen(fd, 'wb') as out:
+                out.write(original[0])
+                out.flush()
+                os.fsync(out.fileno())
+            os.chmod(filename, original[1])
+            if self._file_identity(root, name) != written:
+                raise ProtocolError('File changed before rollback')
+            os.replace(filename, dest)
+        finally:
+            if os.path.exists(filename):
+                os.unlink(filename)
 
     def _receipt_tools(self, receipt):
         required_hashes = ('runner_hash', 'candidate_hash', 'contract_hash', 'policy_hash')
@@ -665,8 +820,7 @@ class WorkProtocol:
         if any(q['answer'] is None and q['versions'].get(w['id']) == w['version'] for q in w['questions']):
             raise ProtocolError('Affected decision question awaits answer')
 
-    @staticmethod
-    def _copy_changes(w, root, changed):
+    def _copy_changes(self, w, root, changed):
         for name in changed:
             source = safe_file(w['workspace'], name)
             dest = safe_file(root, name)
@@ -674,10 +828,17 @@ class WorkProtocol:
             if expected is None:
                 if source.exists():
                     raise ProtocolError('Deleted candidate file changed during integration')
+                if hasattr(self, '_apply_originals') and self._file_identity(root, name) != self._apply_originals[name]:
+                    raise ProtocolError('Main changed before apply deletion; user changes retained')
                 dest.unlink(missing_ok=True)
+                if hasattr(self, '_apply_journal'):
+                    self._apply_journal[name] = None
                 continue
-            content = source.read_bytes()
-            if hashlib.sha256(content).hexdigest() != expected['sha256'] or source.stat().st_mode & 0o777 != expected['mode']:
+            candidate_identity = self._file_identity(w['workspace'], name)
+            if candidate_identity is None:
+                raise ProtocolError('Candidate file disappeared during integration')
+            content = candidate_identity[0]
+            if hashlib.sha256(content).hexdigest() != expected['sha256'] or candidate_identity[1] != expected['mode']:
                 raise ProtocolError('Candidate file changed during integration')
             dest.parent.mkdir(parents=True, exist_ok=True)
             fd, filename = tempfile.mkstemp(prefix='.ustam-apply-', dir=dest.parent)
@@ -687,6 +848,13 @@ class WorkProtocol:
                     out.flush()
                     os.fsync(out.fileno())
                 os.chmod(filename, expected['mode'])
+                if self._file_identity(w['workspace'], name) != candidate_identity:
+                    raise ProtocolError('Candidate file changed before integration write')
+                if hasattr(self, '_apply_originals') and self._file_identity(root, name) != self._apply_originals[name]:
+                    raise ProtocolError('Main changed before apply write; user changes retained')
+                if hasattr(self, '_apply_journal'):
+                    info = os.stat(filename)
+                    self._apply_journal[name] = (content, expected['mode'], info.st_dev, info.st_ino)
                 os.replace(filename, dest)
             finally:
                 if os.path.exists(filename):

@@ -241,7 +241,7 @@ def validate_prefix(path, signature, deadline):
     with path.open('rb') as stream:
         if not same_identity(signature,os.fstat(stream.fileno())):
             raise UsageIndexTimeout('Usage history replaced; retry')
-        stream.seek(signature[2]-1)
+        if signature[2]:stream.seek(signature[2]-1)
         if signature[2] and stream.read(1)!=b'\n':
             raise UsageIndexTimeout('Usage history partial row changed; retry')
         stream.seek(offset)

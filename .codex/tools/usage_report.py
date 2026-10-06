@@ -277,6 +277,8 @@ def pending_accounting_capture(path, current):
             disk=load_progress(path,signature)
             if not disk or not disk[3]:return None
             cached=(signature,disk[1],disk[2])
+            if len(_FILE_PROJECTS)>=4096:_FILE_PROJECTS.clear()
+            _FILE_PROJECTS[str(path)]=cached
         except (OSError,ValueError,TypeError,KeyError):return None
     if len(cached[0])!=6:return None
     entry=load_events(path,cached[0])
@@ -355,16 +357,33 @@ def project_files(root, project, deadline):
                     cached = (disk[4], disk[1], disk[2])
                     _FILE_PROJECTS[str(path)] = cached
                 if cached is None or cached[0][:5] != signature[:5]:
+                    # A complete index can advance over an append, but only after
+                    # hashing every old byte and proving its line boundary.
+                    prior = cached if cached and len(cached[0]) == 6 and same_identity(cached[0],stat) and cached[0][2] < signature[2] else None
                     progress = _FILE_PROGRESS.get(str(path))
+                    advancing_prior = False
                     if progress and progress[0] == signature:
                         offset, projects, threads = progress[1], set(progress[2]), set(progress[3]) if progress[3] is not None else None
                     elif disk:
                         offset, projects, threads = disk[:3]
+                    elif prior:
+                        offset, projects, threads = prior[0][2], set(prior[1]), set(prior[2]) if prior[2] is not None else None
+                        advancing_prior = True
                     else:
                         offset, projects, threads = 0, set(), {path.stem}
                     with path.open('rb') as raw:
                         stream=PrefixStream(raw,signature,deadline)
                         stream.seek(offset)
+                        if advancing_prior:
+                            digest_matches = stream.hash.hexdigest() == prior[0][5]
+                            raw.seek(max(0,offset-1))
+                            complete_line = not offset or raw.read(1) == b'\n'
+                            raw.seek(offset)
+                            if not digest_matches or not complete_line:
+                                # Growth alone is not proof of an append. Rebuild
+                                # changed prefixes and formerly partial EOF rows.
+                                offset, projects, threads = 0, set(), {path.stem}
+                                stream.seek(0)
                         if disk and not disk[3] and len(disk[4])==6 and stream.hash.hexdigest()!=disk[4][5]:
                             raise UsageIndexTimeout('Usage checkpoint prefix changed; retry')
                         try:

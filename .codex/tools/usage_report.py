@@ -20,7 +20,7 @@ _REPORT_CACHE = None
 _FILE_PROGRESS = {}
 
 class UsageIndexTimeout(ValueError):
-    """A complete project index is unfinished; no partial report is available."""
+    """Complete index/event collection is unfinished; no partial report is available."""
 
 
 def canonical_project(value):
@@ -126,7 +126,7 @@ def load_progress(path, signature):
         stat = destination.stat()
         if stat.st_size > 262144 or stat.st_uid != os.getuid() or stat.st_mode & 0o077: return None
         entry = json.loads(destination.read_text())
-        if set(entry) != {'schema','signature','offset','complete','projects','threads'} or entry['schema'] != 1 or entry['signature'] != list(signature): return None
+        if set(entry) != {'schema','signature','offset','complete','projects','threads'} or entry['schema'] != 1 or entry['signature'][:5] != list(signature[:5]): return None
         offset = entry['offset']
         if type(offset) is not int or not 0 <= offset <= signature[2] or type(entry['complete']) is not bool: return None
         if entry['complete'] and offset != signature[2]: return None
@@ -137,7 +137,7 @@ def load_progress(path, signature):
             with path.open('rb') as stream:
                 stream.seek(offset-1)
                 if stream.read(1) != b'\n': return None
-        return offset, set(projects), set(threads) if threads is not None else None, entry['complete']
+        return offset, set(projects), set(threads) if threads is not None else None, entry['complete'],tuple(entry['signature'])
     except (OSError, ValueError, TypeError, KeyError):
         return None
 
@@ -168,6 +168,119 @@ def save_progress(path, signature, offset, projects, threads, complete=False):
         if temporary:
             try: os.unlink(temporary)
             except OSError: pass
+
+
+_VERIFY_PROGRESS = {}
+_PENDING_INDEX = {}
+_DEFERRED_TAIL = set()
+
+
+def file_signature(path, stat):
+    return (str(path),stat.st_ino,stat.st_size,stat.st_mtime_ns,stat.st_dev)
+
+
+def same_identity(signature, stat):
+    return stat.st_ino == signature[1] and (len(signature)<5 or stat.st_dev == signature[4])
+
+
+class PrefixStream:
+    """Hash exactly one captured byte range while parsing it; never follow a tail."""
+    def __init__(self, stream, signature, deadline):
+        self.stream,self.signature,self.deadline = stream,signature,deadline
+        self.bound = signature[2]
+        self.hash = hashlib.sha256()
+        self.usage_offset = 0
+        opened = os.fstat(stream.fileno())
+        if not same_identity(signature,opened) or opened.st_size < self.bound:
+            raise UsageIndexTimeout('Usage history identity changed; retry')
+    def __getattr__(self,name): return getattr(self.stream,name)
+    def tell(self): return self.stream.tell()
+    def read(self, size):
+        data = self.stream.read(min(size,max(0,self.bound-self.tell())))
+        self.last_start=self.tell()-len(data)
+        self.before_last=self.hash.copy();self.last_chunk=data
+        self.hash.update(data)
+        return data
+    def readline(self):
+        data = self.stream.readline(max(0,self.bound-self.tell())) if self.tell()<self.bound else b''
+        self.last_start=self.tell()-len(data)
+        self.before_last=self.hash.copy();self.last_chunk=data
+        self.hash.update(data)
+        return data
+    def seek(self, offset):
+        self.stream.seek(0);self.hash = hashlib.sha256()
+        while self.tell()<offset:
+            if time.monotonic()>=self.deadline:
+                raise UsageIndexTimeout('Usage prefix checkpoint validation timed out; retry')
+            self.read(min(8*1024*1024,offset-self.tell()))
+        return offset
+    def checkpoint_digest(self,offset):
+        if offset==0:return hashlib.sha256().hexdigest()
+        if not hasattr(self,'last_start') or offset<self.last_start:return None
+        digest=self.before_last.copy();digest.update(self.last_chunk[:offset-self.last_start]);return digest.hexdigest()
+    def complete_digest(self):
+        while self.tell()<self.bound:
+            if time.monotonic()>=self.deadline:
+                raise UsageIndexTimeout('Usage prefix hashing timed out; retry')
+            if not self.read(8*1024*1024): raise UsageIndexTimeout('Usage history truncated; retry')
+        return self.hash.hexdigest()
+
+
+def validate_prefix(path, signature, deadline):
+    """Exact-stat fast path, otherwise cryptographically prove the captured prefix."""
+    current = path.stat()
+    if not same_identity(signature,current) or current.st_size < signature[2]:
+        raise UsageIndexTimeout('Usage history replaced or truncated; retry')
+    if file_signature(path,current) == signature[:5]: return
+    if current.st_size <= signature[2] or len(signature)!=6:
+        raise UsageIndexTimeout('Usage history rewritten; retry')
+    key = signature
+    progress = _VERIFY_PROGRESS.get(key)
+    version=file_signature(path,current)
+    offset, digest = (progress[0],progress[1].copy()) if progress and progress[2]==version else (0,hashlib.sha256())
+    with path.open('rb') as stream:
+        if not same_identity(signature,os.fstat(stream.fileno())):
+            raise UsageIndexTimeout('Usage history replaced; retry')
+        stream.seek(signature[2]-1)
+        if signature[2] and stream.read(1)!=b'\n':
+            raise UsageIndexTimeout('Usage history partial row changed; retry')
+        stream.seek(offset)
+        while offset<signature[2]:
+            if time.monotonic()>=deadline:
+                if len(_VERIFY_PROGRESS)>=32:_VERIFY_PROGRESS.clear()
+                _VERIFY_PROGRESS[key]=(offset,digest.copy(),version)
+                raise UsageIndexTimeout('Usage prefix verification timed out; retry to continue')
+            chunk=stream.read(min(8*1024*1024,signature[2]-offset))
+            if not chunk:raise UsageIndexTimeout('Usage history truncated; retry')
+            digest.update(chunk);offset+=len(chunk)
+        after_fd=os.fstat(stream.fileno())
+    after=path.stat()
+    if not same_identity(signature,after_fd) or not same_identity(signature,after) or min(after.st_size,after_fd.st_size)<signature[2] or digest.hexdigest()!=signature[5]:
+        _VERIFY_PROGRESS.pop(key,None)
+        raise UsageIndexTimeout('Usage history prefix changed; retry')
+    _VERIFY_PROGRESS.pop(key,None)
+    _DEFERRED_TAIL.add(str(path))
+
+
+def pending_accounting_capture(path, current):
+    """A partial event cache retains its original proven range across appends."""
+    cached=_FILE_PROJECTS.get(str(path))
+    if cached and cached[0][:5]==current[:5]:return None
+    if not cached:
+        destination=cache_path(path)
+        try:
+            if destination is None or destination.is_symlink():return None
+            stat=destination.stat()
+            if stat.st_size>262144 or stat.st_uid!=os.getuid() or stat.st_mode&0o077:return None
+            signature=tuple(json.loads(destination.read_text())['signature'])
+            if len(signature)!=6 or signature[0]!=str(path) or not all(type(v) is int for v in signature[1:5]) or not isinstance(signature[5],str) or not re.fullmatch('[0-9a-f]{64}',signature[5]):return None
+            disk=load_progress(path,signature)
+            if not disk or not disk[3]:return None
+            cached=(signature,disk[1],disk[2])
+        except (OSError,ValueError,TypeError,KeyError):return None
+    if len(cached[0])!=6:return None
+    entry=load_events(path,cached[0])
+    return cached if entry and not entry['complete'] else None
 
 
 def project_metadata_lines(stream, deadline):
@@ -209,14 +322,39 @@ def project_files(root, project, deadline):
             raise UsageIndexTimeout('Usage history indexing timed out; retry to continue collecting observed counters')
         try:
             stat = path.stat()
-            signature = (str(path), stat.st_ino, stat.st_size, stat.st_mtime_ns)
+            signature = file_signature(path,stat)
             if project:
+                account_pending=pending_accounting_capture(path,signature)
+                if account_pending:
+                    try:validate_prefix(path,account_pending[0],deadline)
+                    except UsageIndexTimeout:
+                        if account_pending[0] not in _VERIFY_PROGRESS:
+                            _FILE_PROJECTS.pop(str(path),None)
+                            destination=event_cache_path(path)
+                            if destination is not None:
+                                try:destination.unlink(missing_ok=True)
+                                except OSError:pass
+                        raise
+                    _FILE_PROJECTS[str(path)]=account_pending
+                    indexed.append((path,account_pending[0],account_pending[1],account_pending[2]))
+                    continue
+                pending=_PENDING_INDEX.get(str(path))
+                if pending:
+                    try:validate_prefix(path,pending[0],deadline)
+                    except UsageIndexTimeout:
+                        if pending[0] not in _VERIFY_PROGRESS:_PENDING_INDEX.pop(str(path),None)
+                        raise
+                    _FILE_PROJECTS[str(path)]=pending
+                    _PENDING_INDEX.pop(str(path),None)
+                    save_progress(path,pending[0],pending[0][2],pending[1],pending[2],complete=True)
+                    indexed.append((path,pending[0],pending[1],pending[2]))
+                    continue
                 cached = _FILE_PROJECTS.get(str(path))
-                disk = load_progress(path, signature) if cached is None or cached[0] != signature else None
+                disk = load_progress(path, signature) if cached is None or cached[0][:5] != signature[:5] else None
                 if disk and disk[3]:
-                    cached = (signature, disk[1], disk[2])
+                    cached = (disk[4], disk[1], disk[2])
                     _FILE_PROJECTS[str(path)] = cached
-                if cached is None or cached[0] != signature:
+                if cached is None or cached[0][:5] != signature[:5]:
                     progress = _FILE_PROGRESS.get(str(path))
                     if progress and progress[0] == signature:
                         offset, projects, threads = progress[1], set(progress[2]), set(progress[3]) if progress[3] is not None else None
@@ -224,8 +362,11 @@ def project_files(root, project, deadline):
                         offset, projects, threads = disk[:3]
                     else:
                         offset, projects, threads = 0, set(), {path.stem}
-                    with path.open('rb') as stream:
+                    with path.open('rb') as raw:
+                        stream=PrefixStream(raw,signature,deadline)
                         stream.seek(offset)
+                        if disk and not disk[3] and len(disk[4])==6 and stream.hash.hexdigest()!=disk[4][5]:
+                            raise UsageIndexTimeout('Usage checkpoint prefix changed; retry')
                         try:
                             for line in project_metadata_lines(stream, deadline):
                                 if line and not body_only(line):
@@ -260,19 +401,24 @@ def project_files(root, project, deadline):
                                 if len(_FILE_PROGRESS) >= 4096: _FILE_PROGRESS.clear()
                                 _FILE_PROGRESS[str(path)] = (signature, offset, set(projects), set(threads))
                         except UsageIndexTimeout:
-                            save_progress(path, signature, offset, projects, threads)
+                            digest=stream.checkpoint_digest(offset)
+                            save_progress(path, signature[:5]+(digest,) if digest else signature[:5], offset, projects, threads)
                             raise
-                    after = path.stat()
-                    if (str(path), after.st_ino, after.st_size, after.st_mtime_ns) != signature:
-                        _FILE_PROGRESS.pop(str(path), None)
-                        raise UsageIndexTimeout('Usage history changed during indexing; retry with the updated records')
+                        signature = signature[:5]+(stream.complete_digest(),)
                     cached = (signature, projects or {'unknown'}, threads)
+                    if len(_PENDING_INDEX)>=32:_PENDING_INDEX.clear()
+                    _PENDING_INDEX[str(path)]=cached
+                    try:validate_prefix(path,signature,deadline)
+                    except UsageIndexTimeout:
+                        if signature not in _VERIFY_PROGRESS:_PENDING_INDEX.pop(str(path),None)
+                        raise
+                    _PENDING_INDEX.pop(str(path),None)
                     if len(_FILE_PROJECTS) >= 4096:
                         _FILE_PROJECTS.clear()
                     _FILE_PROJECTS[str(path)] = cached
                     _FILE_PROGRESS.pop(str(path), None)
                     save_progress(path, signature, stat.st_size, cached[1], cached[2], complete=True)
-                indexed.append((path, signature, cached[1], cached[2]))
+                indexed.append((path, cached[0], cached[1], cached[2]))
             else:
                 indexed.append((path, signature, {'unknown'}, {path.stem}))
         except OSError:
@@ -316,6 +462,149 @@ def token_record(obj):
             return {'usage': info['total_token_usage'], 'semantics': 'cumulative', 'timestamp': scalar(obj, 'timestamp'), 'event_id': 'unknown'}
     return None
 
+EVENT_CACHE_BYTES = 32 * 1024 * 1024
+EVENT_CACHE_COUNT = 100000
+
+
+def normalized_events(obj):
+    """Whitelist accounting inputs only; deltas and attribution stay in scan()."""
+    if not isinstance(obj, dict): return []
+    kind, payload = obj.get('type'), obj.get('payload', {})
+    stamp = scalar(obj, 'timestamp')
+    events = []
+    if kind in ('session_meta', 'turn_context') and isinstance(payload, dict):
+        allowed = META + ('id', 'parent_thread_id', 'agent_nickname', 'agent_role', 'turn_id')
+        meta = {k:v for k,v in payload.items() if k in allowed and isinstance(v,(str,int))}
+        source = payload.get('source')
+        if isinstance(source,str): meta['source'] = 'root'
+        elif isinstance(source,dict) and 'subagent' in source: meta['source'] = {'subagent':True}
+        events.append({'type':kind,'timestamp':stamp,'payload':meta})
+    if kind == 'event_msg' and isinstance(payload,dict) and payload.get('type') in ('task_complete','turn_aborted'):
+        terminal = {'type':payload['type']}
+        if isinstance(payload.get('turn_id'),str): terminal['turn_id'] = payload['turn_id']
+        events.append({'type':'event_msg','timestamp':stamp,'payload':terminal})
+    record = token_record(obj)
+    if record:
+        usage = {k:v for k,v in record['usage'].items() if k in COUNTERS and type(v) is int and v >= 0}
+        if usage:
+            if record['semantics'] == 'cumulative':
+                events.append({'type':'event_msg','timestamp':record['timestamp'],'payload':{'type':'token_count','info':{'total_token_usage':usage}}})
+            else:
+                event = {k:v for k,v in record.items() if k in META and isinstance(v,(str,int))}
+                event.update(type='token_usage_record',timestamp=record['timestamp'],usage=usage,request_id=record['event_id'],turn_id=record['turn_id'])
+                events.append(event)
+    return events
+
+
+def event_cache_path(path):
+    metadata = cache_path(path)
+    if metadata is None: return None
+    directory = metadata.parent / 'events'
+    if directory.is_symlink(): return None
+    try:
+        directory.mkdir(mode=0o700,exist_ok=True)
+        if directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077: return None
+    except OSError: return None
+    return directory / metadata.name
+
+
+def load_events(path, signature):
+    destination = event_cache_path(path)
+    try:
+        if destination is None or destination.is_symlink() or not destination.is_file(): return None
+        stat = destination.stat()
+        if stat.st_uid != os.getuid() or stat.st_mode & 0o077 or stat.st_size > EVENT_CACHE_BYTES: return None
+        entry = json.loads(destination.read_text())
+        if set(entry) != {'schema','signature','offset','complete','events'} or entry['schema'] != 1 or entry['signature'][:5] != list(signature[:5]): return None
+        if len(signature)==6 and entry['signature']!=list(signature):return None
+        if type(entry['complete']) is not bool or type(entry['offset']) is not int or not 0 <= entry['offset'] <= signature[2]: return None
+        if entry['complete'] and entry['offset'] != signature[2]: return None
+        events = entry['events']
+        if not isinstance(events,list) or len(events) > EVENT_CACHE_COUNT: return None
+        for event in events:
+            if event != {'type':'_usage_malformed'} and normalized_events(event) != [event]: return None
+        if entry['offset'] and not entry['complete']:
+            with path.open('rb') as stream:
+                stream.seek(entry['offset']-1)
+                if stream.read(1) != b'\n': return None
+        return entry
+    except (OSError,ValueError,TypeError,KeyError,AttributeError): return None
+
+
+def save_events(path, signature, offset, events, complete=False):
+    destination = event_cache_path(path)
+    if destination is None or len(events) > EVENT_CACHE_COUNT: return
+    temporary = None
+    try:
+        raw = json.dumps({'schema':1,'signature':list(signature),'offset':offset,'complete':complete,'events':events},separators=(',',':'))
+        size = len(raw.encode())
+        if size > EVENT_CACHE_BYTES or destination.is_symlink(): return
+        siblings = [(p,p.stat().st_size,p.stat().st_mtime_ns) for p in destination.parent.glob('*.json') if p != destination]
+        total, count = sum(item[1] for item in siblings), len(siblings)
+        for old, old_size, _ in sorted(siblings,key=lambda item:item[2]):
+            if count < 512 and total + size <= 128*1024*1024: break
+            old.unlink();total -= old_size;count -= 1
+        fd,temporary = tempfile.mkstemp(prefix='.events-',dir=destination.parent)
+        with os.fdopen(fd,'w') as stream:
+            stream.write(raw);stream.flush();os.fsync(stream.fileno())
+        os.replace(temporary,destination);temporary = None
+    except OSError: pass
+    finally:
+        if temporary:
+            try: os.unlink(temporary)
+            except OSError: pass
+
+
+def accounting_objects(path, signature, stream, deadline):
+    """Replay normalized events, then safely continue unfinished extraction."""
+    raw=stream
+    if signature is not None:stream=PrefixStream(raw,signature,deadline)
+    cached = load_events(path,signature) if signature is not None else None
+    events = cached['events'] if cached else []
+    for event in events:
+        if time.monotonic() >= deadline:
+            raise UsageIndexTimeout('Usage event collection timed out; retry to continue observed counters')
+        yield event
+    if cached and cached['complete']:
+        validate_prefix(path,signature,deadline)
+        return
+    offset = cached['offset'] if cached else 0
+    stream.seek(offset)
+    cacheable = signature is not None
+    trailing = []
+    while True:
+        if time.monotonic() >= deadline:
+            if cacheable: save_events(path,signature,offset,events)
+            raise UsageIndexTimeout('Usage event collection timed out; retry to continue observed counters')
+        line = stream.readline()
+        if not line: break
+        next_offset = stream.tell()
+        complete_line = line.endswith(b'\n')
+        extracted = []
+        if not body_only(line):
+            try: extracted = normalized_events(json.loads(line))
+            except (json.JSONDecodeError,UnicodeError): extracted = [{'type':'_usage_malformed'}]
+        if complete_line:
+            offset = next_offset
+            if cacheable:
+                events.extend(extracted)
+                if len(events) > EVENT_CACHE_COUNT:
+                    cacheable = False;events = []
+        for event in extracted: yield event
+        if not complete_line:
+            # EOF without a newline is valid only in a complete, unchanged file.
+            trailing = extracted
+    if signature is not None:
+        digest=stream.complete_digest()
+        if len(signature)==6 and digest!=signature[5]:
+            raise UsageIndexTimeout('Usage history prefix changed during event collection; retry')
+        signature=signature[:5]+(digest,)
+        validate_prefix(path,signature,deadline)
+    if cacheable:
+        events.extend(trailing)
+        save_events(path,signature,signature[2],events,complete=True)
+
+
 def instant(value):
     if not isinstance(value, str):
         return None
@@ -327,40 +616,35 @@ def instant(value):
 
 def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
     global _REPORT_CACHE
+    _DEFERRED_TAIL.clear()
     project = canonical_project(project)
     deadline = time.monotonic() + SCAN_SECONDS
     selected = project_files(root, project, deadline)
     cache_key = (str(root.resolve()), date_from, date_to, project, thread, tuple(signature for _, signature in selected))
     if project and _REPORT_CACHE is not None and _REPORT_CACHE[0] == cache_key:
-        return copy.deepcopy(_REPORT_CACHE[1])
+        cached_report=copy.deepcopy(_REPORT_CACHE[1])
+        cached_report['deferred_tail_files']=len(_DEFERRED_TAIL)
+        if _DEFERRED_TAIL and 'verified captured prefix' not in cached_report['limitations']:
+            cached_report['limitations'] += ' Growing files were read through a verified captured prefix; appended tail records are deferred until the next refresh.'
+        return cached_report
     groups = defaultdict(lambda: defaultdict(int))
     records, raw_records, seen, previous = [], [], set(), {}
     turns, agents = {}, {}
     files = malformed = duplicates = resets = unreadable = 0
-    for path, _ in selected:
+    for path, signature in selected:
         if time.monotonic() >= deadline:
-            raise ValueError('Usage collection timed out; retry to collect observed counters')
+            raise UsageIndexTimeout('Usage collection timed out; retry to collect observed counters')
         files += 1
         metadata = {'thread_id': path.stem}
         try:
-            lines = path.open(encoding='utf-8', errors='replace')
+            lines = path.open('rb')
         except OSError:
             unreadable += 1
             continue
         with lines:
-            for index, line in enumerate(lines):
-                if time.monotonic() >= deadline:
-                    raise ValueError('Usage collection timed out; retry to collect observed counters')
-                # Message/tool bodies are not accounting data. Avoid decoding large
-                # unrelated payloads; only metadata and accounting events are needed.
-                if body_only(line):
-                    continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
+            for obj in accounting_objects(path,signature,lines,deadline):
+                if obj.get('type') == '_usage_malformed':
                     malformed += 1
-                    continue
-                if not isinstance(obj, dict):
                     continue
                 payload = obj.get('payload', {})
                 if obj.get('type') in ('session_meta', 'turn_context') and isinstance(payload, dict):
@@ -470,6 +754,9 @@ def scan(root: Path, *, date_from='', date_to='', project='', thread=''):
             grand[name] += value
     report = {'platform': 'codex', 'status': 'available' if records else 'unavailable', 'source': 'local session request usage; legacy cumulative token_count fallback', 'files_scanned': files, 'records_observed': len(records), 'duplicates_skipped': duplicates, 'counter_resets': resets, 'unreadable_files': unreadable, 'malformed_lines_skipped': malformed, 'totals': dict(grand), 'groups': result_groups, 'records': records, 'agents': list(agents.values()), 'cost': None, 'limitations': 'Observed counters only, not quota or billing. Cache is included in input; reasoning is included in output. Unknown metadata is unavailable; thread filename is a fallback. Unknown legacy timestamps cannot be reliably ordered. Legacy resets count a new segment. Request records take precedence per thread; mixed-format logs may be incomplete. No reliable pricing metadata; cost unavailable.'}
 
+    report['deferred_tail_files'] = len(_DEFERRED_TAIL)
+    if _DEFERRED_TAIL:
+        report['limitations'] += ' Growing files were read through a verified captured prefix; appended tail records are deferred until the next refresh.'
     if project and len(records) <= 10000 and len(agents) <= 10000 and all(signature is not None for _, signature in selected):
         _REPORT_CACHE = (cache_key, copy.deepcopy(report))
     return report

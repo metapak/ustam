@@ -368,7 +368,15 @@
         },
         "scripts/dashboard.py": {
           "git_mode": "100644",
-          "sha256": "e866af06c216b90a54cb50939acb1618fb6b0b2e4860ac86be33e5d72f9c7e9d"
+          "origin_sha256": "e866af06c216b90a54cb50939acb1618fb6b0b2e4860ac86be33e5d72f9c7e9d",
+          "repair": {
+            "approved_source_sha256": "9e9317d9200f6ef76e246b723de3ea52bc1924a0022b5b18b57e818e7dae187c",
+            "original_import_commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
+            "reason": "Render trusted work_protocol_wrapper in actual Codex Console desired files instead of copying placeholder bridge",
+            "regression_test": "tests/test_ustam_codex_bridge.py",
+            "regression_test_sha256": "b65200b0b5bf2a4bb8422c6d29b07b598c747b4501beefeb81614c5b80fecdba"
+          },
+          "sha256": "9e9317d9200f6ef76e246b723de3ea52bc1924a0022b5b18b57e818e7dae187c"
         },
         "scripts/install.ps1": {
           "git_mode": "100644",

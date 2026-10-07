@@ -607,6 +607,7 @@ class Console:
         before = self.snapshot()
         manifest = installer.load_manifest(self.target)
         desired = {str(p): (ROOT/p).read_bytes() for p in installer.MANAGED_RELATIVE_FILES}
+        desired[str(Path('.codex/tools/work_protocol'))] = installer.work_protocol_wrapper(self.target).encode()
         for role, relative in installer.ROLE_FILES.items():
             old = before[str(relative)]
             text = old.decode() if old is not None else (ROOT/relative).read_text()

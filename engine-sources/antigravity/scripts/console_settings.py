@@ -6,6 +6,8 @@ symlinks and changed owned files, and retain durable before/after backup receipt
 from __future__ import annotations
 import base64
 from contextlib import contextmanager
+from contextvars import ContextVar
+from functools import wraps
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -81,6 +83,27 @@ class TransactionError(ValueError):
         self.stage, self.recovery_status = stage, recovery_status
 
 
+_ACTIVE_ROOT = ContextVar('antigravity_transaction_root', default=None)
+
+
+def identity(root):
+    info = root.stat(follow_symlinks=False)
+    if root.is_symlink() or not stat.S_ISDIR(info.st_mode) or info.st_ino <= 0 or info.st_dev < 0:
+        raise ValueError('Stable project directory identity unavailable')
+    return {'device': info.st_dev, 'inode': info.st_ino}
+
+
+def bound(method):
+    @wraps(method)
+    def checked(self, *args, **kwargs):
+        if identity(self.target) != self.root_identity:
+            raise ValueError('Project directory identity changed; no mutation permitted')
+        token = _ACTIVE_ROOT.set((self.target, self.root_identity))
+        try: return method(self, *args, **kwargs)
+        finally: _ACTIVE_ROOT.reset(token)
+    return checked
+
+
 def digest(data):
     return hashlib.sha256(data).hexdigest() if data is not None else None
 
@@ -94,6 +117,9 @@ def allowed(name):
 
 
 def safe(root, name):
+    active = _ACTIVE_ROOT.get()
+    if active and active[0] == root and identity(root) != active[1]:
+        raise ValueError('Project directory identity changed; no mutation permitted')
     if root.is_symlink() or root.resolve(strict=True) != root:
         raise ValueError('Project path changed; refresh before installing')
     p = Path(name)
@@ -126,6 +152,11 @@ def parent_fd(root, name, create=False):
                 except FileExistsError: pass
             child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
             os.close(fd); fd = child
+            active = _ACTIVE_ROOT.get()
+            if i == len(root.parts) - 2 and active and active[0] == root:
+                info = os.fstat(fd)
+                if {'device': info.st_dev, 'inode': info.st_ino} != active[1]:
+                    raise ValueError('Project directory identity changed during traversal')
         safe(root, name)
         actual, opened = (root / name).parent.stat(), os.fstat(fd)
         if (actual.st_dev, actual.st_ino) != (opened.st_dev, opened.st_ino):
@@ -201,6 +232,25 @@ def write(root, name, data, expected):
         if os.path.exists(tmp): os.unlink(tmp)
 
 
+def rollback(root, attempted, original, desired):
+    """Observe actual post-write state, including failures after replace/unlink."""
+    for name in reversed(attempted):
+        try:
+            live = read(root, name)
+            if live == original[name]: continue
+            if live == desired[name]: write(root, name, original[name], desired[name])
+        except Exception:
+            # A rollback write can itself fail after mutation. The final byte
+            # comparison below decides recovery status, not the exception alone.
+            pass
+    conflicts = []
+    for name, expected in original.items():
+        try:
+            if read(root, name) != expected: conflicts.append(name)
+        except Exception: conflicts.append(name)
+    return conflicts
+
+
 @contextmanager
 def locked(root):
     name = META + '/install.lock'
@@ -247,8 +297,9 @@ def probe(root):
                     reason = 'Antigravity CLI below 1.2.16 is unsupported; update it separately.'
                 else:
                     h = subprocess.run([str(path), '--help'], cwd=tempfile.gettempdir(), capture_output=True, timeout=5)
-                    help_text = h.stdout[:65536].decode('utf-8', 'replace')
-                    if h.returncode == 0 and len(h.stdout) <= 65536 and all(flag in help_text for flag in ('--agent', '--model', '--output-format', 'agents')):
+                    help_bytes = h.stdout + h.stderr
+                    help_text = help_bytes[:65536].decode('utf-8', 'replace')
+                    if h.returncode == 0 and len(help_bytes) <= 65536 and all(flag in help_text for flag in ('--agent', '--model', '--output-format', 'agents')):
                         return {'status': 'supported', 'version': version, 'reason': 'Local version/help capabilities verified; account access and native execution are unverified.'}
                     reason = 'Installed agy lacks the required local agent/model capabilities.'
             else:
@@ -300,16 +351,20 @@ class Settings:
     def __init__(self, target, bridge_command):
         self.target = Path(target).resolve(strict=True)
         if not self.target.is_dir(): raise ValueError('Project directory required')
+        self.root_identity = identity(self.target)
         if not bridge_command or not all(isinstance(x, str) for x in bridge_command): raise ValueError('Trusted bridge runtime required')
         self.bridge_command = [*bridge_command, '--project', str(self.target)]
         self.pending = None
 
+    @bound
     def manifest(self, verify=True):
         raw = read(self.target, MANIFEST)
         if raw is None: return None
         m = json.loads(raw)
         if not isinstance(m, dict) or m.get('schema') != 1 or m.get('provider') != 'antigravity' or not isinstance(m.get('files'), dict) or not m['files'] or len(m['files']) > 55 or not re.fullmatch(r'[a-f0-9]{32}', m.get('backup_id', '')):
             raise ValueError('Invalid Antigravity install metadata')
+        if m.get('root_identity') != self.root_identity:
+            raise ValueError('Installed project directory identity changed; copied installations cannot be restored or overwritten')
         validate(m.get('orchestra'))
         for name, entry in m['files'].items():
             if name == MANIFEST or not allowed(name) or not isinstance(entry, dict) or entry.get('owned') is not True or not re.fullmatch(r'[a-f0-9]{64}', entry.get('sha256', '')):
@@ -318,12 +373,14 @@ class Settings:
                 raise ValueError('Installed Antigravity files changed or incomplete; preserve user edits and inspect recovery')
         return m
 
+    @bound
     def support(self):
         cli = probe(self.target)
         return {'cli': cli, 'legacy_ide': {'status': 'unverified', 'reason': 'IDE installation does not verify custom agent support.'},
                 'native_agents': {'status': 'local_help_verified' if cli['status'] == 'supported' else 'unsupported'},
                 'jobs': {'status': 'unsupported'}, 'usage': {'status': 'unsupported'}}
 
+    @bound
     def inspect(self):
         try:
             manifest = self.manifest()
@@ -335,6 +392,7 @@ class Settings:
                 'helpers': team.get('helpers', []), 'concurrency': 1, 'profile': team.get('profile', 'balanced'), 'restore_available': bool(manifest),
                 'capabilities': dict(CAPABILITIES), 'support_matrix': self.support(), 'limitations': LIMITATIONS + limitation}
 
+    @bound
     def models(self):
         return {'provider': 'antigravity', 'status': 'unverified', 'source': 'documented native agent model tiers',
                 'models': [{'id': m, 'efforts': [], 'origin': 'documented_tier'} for m in install.MODELS], 'roles': list(install.ROLES),
@@ -356,6 +414,7 @@ class Settings:
         values['.antigravity/tools/work_protocol'] = ('#!/bin/sh\nexec ' + ' '.join(shlex.quote(a) for a in self.bridge_command) + ' "$@"\n').encode()
         return values
 
+    @bound
     def plan(self, payload):
         team = validate(payload)
         support = self.support()
@@ -370,17 +429,21 @@ class Settings:
         # Snapshot every declared file and manifest; unrelated provider files never enter it.
         return team, old, desired, before, support
 
+    @bound
     def preview(self, payload):
         team, old, desired, before, support = self.plan(payload)
         token = secrets.token_urlsafe(24)
-        self.pending = (token, time.monotonic() + 300, team, before)
+        self.pending = (token, time.monotonic() + 300, team, before, dict(self.root_identity))
         changes = [{'path': n, 'action': 'delete' if n not in desired else 'create' if before[n] is None else 'update' if before[n] != desired[n] else 'unchanged'} for n in sorted(set(before) - {MANIFEST})]
-        return {'provider': 'antigravity', 'target': str(self.target), 'preview_id': token, 'files': changes, 'changes': changes,
+        return {'provider': 'antigravity', 'target': str(self.target), 'preview_id': token, 'root_identity': dict(self.root_identity), 'files': changes, 'changes': changes,
                 'support_matrix': support, 'capabilities': dict(CAPABILITIES), 'limitations': list(LIMITATIONS), 'phases': [{'phase': 'preview', 'status': 'completed'}]}
 
+    @bound
     def apply(self, params):
         pending, self.pending = self.pending, None
         if set(params) != {'preview_id'} or not pending or pending[0] != params['preview_id'] or time.monotonic() > pending[1]: raise ValueError('Fresh Antigravity preview required')
+        if len(pending) != 5 or pending[4] != self.root_identity:
+            raise ValueError('Preview project directory identity changed; no mutation permitted')
         # Preflight runs before lock-directory creation and again while holding the lock.
         self.plan(pending[2])
         with locked(self.target):
@@ -398,7 +461,7 @@ class Settings:
                     raise ValueError('Invalid installation timestamp; inspect recovery')
             backup_id = secrets.token_hex(16)
             manifest = {'schema': 1, 'provider': 'antigravity', 'installed_at': stamp, 'updated_at': datetime.now(timezone.utc).isoformat(),
-                        'backup_id': backup_id, 'cli_version': support['cli']['version'], 'orchestra': team,
+                        'backup_id': backup_id, 'root_identity': dict(self.root_identity), 'cli_version': support['cli']['version'], 'orchestra': team,
                         'files': {n: {'owned': True, 'sha256': digest(data)} for n, data in desired.items()}}
             receipt = {'schema': 1, 'provider': 'antigravity', 'id': backup_id,
                        'manifest_before': base64.b64encode(before[MANIFEST]).decode() if before[MANIFEST] is not None else None,
@@ -418,20 +481,18 @@ class Settings:
             try:
                 for name in sorted(after, key=lambda n: (n == MANIFEST, n)):
                     if before[name] != after[name]:
-                        write(self.target, name, after[name], before[name]); completed.append(name)
+                        completed.append(name); write(self.target, name, after[name], before[name])
                 phases.append({'phase': 'applied', 'status': 'completed'})
                 stage = 'verified'
                 self.manifest()
                 if any(read(self.target, n) != data for n, data in after.items()): raise ValueError('Installed file verification failed')
                 phases.append({'phase': 'verified', 'status': 'completed'})
             except Exception as exc:
-                conflicts = []
-                for n in reversed(completed):
-                    try: write(self.target, n, before[n], after[n])
-                    except Exception: conflicts.append(n)
+                conflicts = rollback(self.target, completed, before, after)
                 raise TransactionError('Antigravity ' + stage + ' failed; backup retained; rollback ' + ('conflicts retained: ' + ', '.join(conflicts) if conflicts else 'completed') + ': ' + str(exc), stage, 'conflicts_retained' if conflicts else 'rolled_back') from exc
             return {'provider': 'antigravity', 'applied': True, 'verified': True, 'backup_id': backup_id, 'phases': phases, 'capabilities': dict(CAPABILITIES)}
 
+    @bound
     def restore(self, params):
         if params: raise ValueError('Restore takes no fields')
         with locked(self.target):
@@ -461,18 +522,16 @@ class Settings:
             completed = []
             try:
                 for n in sorted(before, key=lambda n: (n == MANIFEST, n)):
-                    write(self.target, n, before[n], current[n]); completed.append(n)
+                    completed.append(n); write(self.target, n, before[n], current[n])
                 if any(read(self.target, n) != data for n, data in before.items()): raise ValueError('Restore verification failed')
                 self.manifest()
             except Exception as exc:
-                conflicts = []
-                for n in reversed(completed):
-                    try: write(self.target, n, current[n], before[n])
-                    except Exception: conflicts.append(n)
+                conflicts = rollback(self.target, completed, current, before)
                 raise TransactionError('Antigravity restore failed; rollback ' + ('conflicts retained: ' + ', '.join(conflicts) if conflicts else 'completed') + ': ' + str(exc), 'restore', 'conflicts_retained' if conflicts else 'rolled_back') from exc
             self.pending = None
             return {'provider': 'antigravity', 'restored': True, 'verified': True, 'phases': [{'phase': 'restore', 'status': 'completed'}, {'phase': 'verified', 'status': 'completed'}]}
 
+    @bound
     def call(self, method, params):
         try:
             if method == 'inspect': return self.inspect()

@@ -7,7 +7,7 @@
 
 Have Codex, [Git](https://git-scm.com/downloads), and [Python 3.11 or newer](https://www.python.org/downloads/) installed. Python is not included.
 
-1. **Download:** [Get the current ZIP](https://github.com/metapak/ustam-codex-orchestrator/archive/refs/heads/main.zip) and open the extracted folder.
+1. **Download:** [Get the current ZIP](https://github.com/metapak/ustam/archive/refs/heads/main.zip) and open the extracted folder.
 2. **Open:** Open `launchers` and double-click **Ustam.app**.
 3. **Follow the two folder steps:** If macOS asks for the setup package, read the first dialog and choose the outer folder extracted from the ZIP whose name starts with `ustam-codex-orchestrator`. It contains `launchers` and `scripts`; the picker opens in Downloads. Choose **Try again** if you select a different folder. The second dialog asks for the Git project where you work with Codex; setup will save settings there. Each picker has a short prompt in your system language.
 4. **Install:** In the browser, keep the suggested team or change it. Click **Check changes**, then **Install**. Restart Codex in that project.

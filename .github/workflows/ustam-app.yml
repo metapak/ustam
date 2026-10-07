@@ -17,6 +17,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -25,6 +27,14 @@ jobs:
         run: python scripts/validate.py
       - name: Run source tests
         run: python -m unittest discover -s tests -v
+      - name: Regenerate and verify four local immutable engine closures
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python scripts/build_ustam_engines.py
+          git diff --exit-code -- ustam/engines ustam/engine-manifest.json
+          python -c "from scripts.build_ustam_app import verify_assets; verify_assets()"
       - name: Build native package from checked-in immutable engine closure
         run: python scripts/build_ustam_app.py --skip-engine-build
       - name: Test bundled runtime offline

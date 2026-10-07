@@ -8,6 +8,8 @@
 
 One local hub for Codex, Claude Code, OpenCode, and Antigravity.
 
+This is the single maintained Ustam repository. Current downloads and releases live here; former provider-specific repositories link to this hub. [Repository migration](docs/repository-migration.md).
+
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](https://www.python.org/downloads/)
 
@@ -20,24 +22,39 @@ Set up the team, check the changes, and see locally recorded past usage. The set
 
 ## Turkish introduction
 
-[![Watch the Turkish Ustam introduction](docs/assets/ustam-trailer-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4)
+[![Watch the Turkish Ustam introduction](docs/assets/ustam-trailer-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam/main/docs/assets/ustam-trailer-tr-55s.mp4)
 
-[Play or download the Turkish video (MP4, 55 seconds)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4). Turkish titles with original music and sound effects; no spoken narration. Usage figures shown on screen are sample data. Select the cover or MP4 link to open the video.
+[Play or download the Turkish video (MP4, 55 seconds)](https://raw.githubusercontent.com/metapak/ustam/main/docs/assets/ustam-trailer-tr-55s.mp4). Turkish titles with original music and sound effects; no spoken narration. Usage figures shown on screen are sample data. Select the cover or MP4 link to open the video.
 
 ## Antigravity
 
 Antigravity supports project team setup with `inherit`, `flash` and `pro` model tiers, protected installation/restore and the manual Works bridge. Antigravity unattended Jobs and measured usage are unsupported; native read-only chief enforcement and model execution are unverified. [Support and limits](docs/antigravity.md).
 
-## Install in four steps
+## Download and start
 
-**Current release:** [1.0.0-beta.4](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.4) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.4/ustam-1.0.0-beta.4-macos-arm64.zip) · [Release notes](docs/release-ustam-v1.0.0-beta.4.md). The Mac bundle was verified locally; public-download Gatekeeper restrictions remain unresolved. Windows/Linux links below are the previous beta.2 release.
+**[Download Ustam for Mac arm64](https://github.com/metapak/ustam/releases/download/ustam-v1.0.0-beta.5/ustam-1.0.0-beta.5-macos-arm64.zip)** · [1.0.0-beta.5 release and checksums](https://github.com/metapak/ustam/releases/tag/ustam-v1.0.0-beta.5) · [Release notes](docs/release-ustam-v1.0.0-beta.5.md).
 
-1. **Download Ustam:** Choose the native application ZIP for Windows or Linux from the [1.0.0-beta.2 release](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.2) and extract it completely: [Windows](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-windows-x86_64.zip) · [Linux](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-linux-x86_64.zip).
-2. **Open:** Open **Ustam.exe** on Windows or **Ustam** on Linux. For a locally built Mac app, open **Ustam.app**. The native package includes Python. The Mac app can be moved on its own; keep the extracted Windows/Linux files together.
-3. **Select apps:** Choose the apps you use: Codex, Claude Code, OpenCode, and Antigravity. Install and sign in to each selected provider's command-line tool.
-4. **Add projects:** Add project folders in the local browser page, check the changes, then apply them.
+The Mac package includes Python and was checked locally. It has no Apple Developer ID signing or notarization; public-download Gatekeeper acceptance remains unresolved. [Mac installation notes](docs/ustam-macos-local-install.md).
 
-Native builds are unsigned; Mac Gatekeeper may block the download. See [Ustam local hub](docs/ustam-hub.md) for details and advanced source/CLI use. Running the source ZIP requires Python 3.11+. Provider accounts and model access are separate requirements.
+Open Ustam, then follow **Project → Tool → Team → Install**:
+
+1. **Project:** Add the project folder you want to configure.
+2. **Tool:** Choose Codex, Claude Code, OpenCode or Antigravity for that project.
+3. **Team:** Choose a ready or saved orchestra, or set the chief, helpers and supported model options.
+4. **Install:** Preview the changes and confirm installation into the project. Installation does not start an AI task.
+
+Install the selected provider's CLI separately; account login and model access are required for real provider work. Source use requires Python 3.11+. The [previous Windows/Linux beta.2 packages](https://github.com/metapak/ustam/releases/tag/ustam-v1.0.0-beta.2) cover the earlier three-tool version, without Antigravity or the newer features. They are legacy downloads, not beta.5 builds.
+
+## Tool support
+
+| Tool | Project teams and models | Restore | Recorded usage |
+|---|---|---|---|
+| Codex | Installed CLI and available model catalog | Managed configuration | Local recorded usage |
+| Claude Code | Installed CLI; model-specific effort options | Managed configuration | Local recorded usage |
+| OpenCode | Installed CLI and configured providers/models | Unavailable | Local records where supported |
+| Antigravity | `agy` 1.2.16+ and local help check; `inherit`, `flash`, `pro` | Verified managed files and backups | Unsupported |
+
+The manual Works bridge is available for all four tools. Antigravity unattended Jobs are disabled; account entitlement, native model execution and native read-only chief enforcement remain unverified. Available models and tools depend on the installed CLI and account. [Antigravity details](docs/antigravity.md) · [Works protocol](docs/ustam-work-protocol.md).
 
 ## Projects and orchestras
 

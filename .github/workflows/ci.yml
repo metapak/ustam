@@ -1,5 +1,5 @@
 
-name: CI
+name: Ustam CI
 
 on:
   push:
@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,6 +32,14 @@ jobs:
       - name: Validate repository contracts
         run: python scripts/validate.py
 
+      - name: Regenerate and verify four local immutable engine closures
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python scripts/build_ustam_engines.py
+          git diff --exit-code -- ustam/engines ustam/engine-manifest.json
+          python -c "from scripts.build_ustam_app import verify_assets; verify_assets()"
       - name: Run tests
         run: python -m unittest discover -s tests -v
 

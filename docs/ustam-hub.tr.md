@@ -59,4 +59,4 @@ Sağlayıcı çalışma sınırları ekip ayarlarından ayrı gösterilir. Her s
 
 [Eski sağlayıcı konsolu](legacy-console.tr.md), ekran görüntüleri, on görev şablonları ve önce proje seçen başlatıcılar ileri düzey uyumluluk referansıdır. Güncel birleşik hub’dan ayrıdır.
 
-[Beta.4 sürüm notları](release-ustam-v1.0.0-beta.4.tr.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.4/ustam-1.0.0-beta.4-macos-arm64.zip). Windows/Linux yerel indirmeleri beta.2 olarak kalır.
+[Beta.5 sürüm notları](release-ustam-v1.0.0-beta.5.tr.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam/releases/download/ustam-v1.0.0-beta.5/ustam-1.0.0-beta.5-macos-arm64.zip). Windows/Linux yerel indirmeleri beta.2 olarak kalır.

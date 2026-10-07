@@ -14,9 +14,9 @@ Sahnede şefi veya bir yardımcıyı seçip modelini ve inceleme düzeyini belir
 
 ## Ustam’ı 40 saniyede tanıyın
 
-[![Ustam Türkçe tanıtımını izleyin](assets/ustam-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-promo-tr-40s.mp4)
+[![Ustam Türkçe tanıtımını izleyin](assets/ustam-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam/main/docs/assets/ustam-promo-tr-40s.mp4)
 
-[Türkçe videoyu oynatın veya indirin (MP4)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-promo-tr-40s.mp4). Türkçe başlıklar ve müzikle Ustam’ın 40 saniyelik tanıtımı. Konsol ve kullanım rakamları örnek veridir. GitHub satır içinde oynatıcı göstermezse orijinal videoyu açmak için postere veya MP4 bağlantısına tıklayın.
+[Türkçe videoyu oynatın veya indirin (MP4)](https://raw.githubusercontent.com/metapak/ustam/main/docs/assets/ustam-promo-tr-40s.mp4). Türkçe başlıklar ve müzikle Ustam’ın 40 saniyelik tanıtımı. Konsol ve kullanım rakamları örnek veridir. GitHub satır içinde oynatıcı göstermezse orijinal videoyu açmak için postere veya MP4 bağlantısına tıklayın.
 
 ![Orkestra sahnesini ve gözlenen yardımcı dağılımını gösteren örnek Ustam Kullanım sayfası](assets/console-tr.png)
 
@@ -28,7 +28,7 @@ Sahnede şefi veya bir yardımcıyı seçip modelini ve inceleme düzeyini belir
 Komut satırı kurucusu otomasyon için kullanılabilir; yardımcıları tek tek oluşturma ekranı tarayıcı konsolundadır.
 
 ```bash
-git clone https://github.com/metapak/ustam-codex-orchestrator.git
+git clone https://github.com/metapak/ustam.git
 cd ustam-codex-orchestrator
 python3 scripts/install.py /projenin/tam/yolu --preset balanced --dry-run
 python3 scripts/install.py /projenin/tam/yolu --preset balanced

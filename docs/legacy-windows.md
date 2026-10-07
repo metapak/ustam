@@ -7,7 +7,7 @@
 
 Have Codex, [Git](https://git-scm.com/downloads), and [Python 3.11 or newer](https://www.python.org/downloads/) installed. Python is not included.
 
-1. **Download:** [Get the current ZIP](https://github.com/metapak/ustam-codex-orchestrator/archive/refs/heads/main.zip) and open the extracted folder.
+1. **Download:** [Get the current ZIP](https://github.com/metapak/ustam/archive/refs/heads/main.zip) and open the extracted folder.
 2. **Open:** Open `launchers` and double-click **Launch Ustam.vbs**.
 3. **Choose a project:** Pick the Git project folder where you use Codex.
 4. **Install:** In the browser, keep the suggested team or change it. Click **Check changes**, then **Install**. Restart Codex in that project.

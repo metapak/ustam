@@ -1,5 +1,9 @@
 # Changelog
 
+## Ustam 1.0.0-beta.5 — 2026-10-07
+
+One maintained `metapak/ustam` repository, four source-pinned bundled engines with license provenance, unified download/docs, four-tool project picker and model-specific Claude effort controls. Previous releases/media retained; former Claude/OpenCode repositories point to Ustam and are archived. Mac arm64 package only; Windows/Linux beta.2 remains legacy. [English notes](docs/release-ustam-v1.0.0-beta.5.md) · [Türkçe sürüm notları](docs/release-ustam-v1.0.0-beta.5.tr.md).
+
 ## Ustam 1.0.0-beta.4 — 2026-10-07
 
 Antigravity joins the shared hub with inherit/flash/pro team models, protected project installation and restore receipts, and the manual Works bridge. Existing provider setups and user files remain protected. Antigravity Jobs and measured usage are unsupported. Mac arm64 package only; Windows/Linux downloads remain beta.2. [English notes](docs/release-ustam-v1.0.0-beta.4.md) · [Türkçe sürüm notları](docs/release-ustam-v1.0.0-beta.4.tr.md).

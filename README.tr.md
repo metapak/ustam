@@ -8,6 +8,8 @@
 
 Codex, Claude Code, OpenCode ve Antigravity için tek yerel merkez.
 
+Bu, Ustam’ın bakımı sürdürülen tek deposudur. Güncel indirmeler ve sürümler buradadır; önceki sağlayıcıya özel depolar bu merkeze yönlendirir. [Depo geçişi](docs/repository-migration.tr.md).
+
 [![Lisans: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python: 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](https://www.python.org/downloads/)
 
@@ -20,24 +22,39 @@ Ekibi kurun, değişiklikleri kontrol edin ve geçmiş kullanımı görün. Şef
 
 ## Güncel Türkçe tanıtım
 
-[![Ustam Türkçe tanıtımını izleyin](docs/assets/ustam-trailer-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4)
+[![Ustam Türkçe tanıtımını izleyin](docs/assets/ustam-trailer-poster-tr.png)](https://raw.githubusercontent.com/metapak/ustam/main/docs/assets/ustam-trailer-tr-55s.mp4)
 
-[Türkçe videoyu oynatın veya indirin (MP4, 55 saniye)](https://raw.githubusercontent.com/metapak/ustam-codex-orchestrator/main/docs/assets/ustam-trailer-tr-55s.mp4). Türkçe başlıklar, özgün müzik ve ses efektleriyle Ustam tanıtımı; sesli anlatım içermez. Ekranlardaki kullanım rakamları örnek veridir. Videoyu açmak için kapağa veya MP4 bağlantısına tıklayın.
+[Türkçe videoyu oynatın veya indirin (MP4, 55 saniye)](https://raw.githubusercontent.com/metapak/ustam/main/docs/assets/ustam-trailer-tr-55s.mp4). Türkçe başlıklar, özgün müzik ve ses efektleriyle Ustam tanıtımı; sesli anlatım içermez. Ekranlardaki kullanım rakamları örnek veridir. Videoyu açmak için kapağa veya MP4 bağlantısına tıklayın.
 
 ## Antigravity
 
 Antigravity; `inherit`, `flash` ve `pro` model katmanlarıyla proje ekibi kurulumu, korumalı kurulum/geri alma ve manuel İşler köprüsü sunar. Antigravity için gözetimsiz Jobs ve ölçülmüş kullanım desteklenmez; native salt okunur şef zorlaması ve model çalışması doğrulanmış değildir. [Destek ve sınırlar](docs/antigravity.tr.md).
 
-## Dört adımda kurulum
+## İndirin ve başlayın
 
-**Güncel sürüm:** [1.0.0-beta.4](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.4) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.4/ustam-1.0.0-beta.4-macos-arm64.zip) · [Sürüm notları](docs/release-ustam-v1.0.0-beta.4.tr.md). Mac paketi yerelde doğrulandı; herkese açık indirmede Gatekeeper kısıtları çözülmüş değildir. Aşağıdaki Windows/Linux bağlantıları önceki beta.2 sürümüdür.
+**[Mac arm64 için Ustam'ı indirin](https://github.com/metapak/ustam/releases/download/ustam-v1.0.0-beta.5/ustam-1.0.0-beta.5-macos-arm64.zip)** · [1.0.0-beta.5 sürümü ve hash listesi](https://github.com/metapak/ustam/releases/tag/ustam-v1.0.0-beta.5) · [Sürüm notları](docs/release-ustam-v1.0.0-beta.5.tr.md).
 
-1. **Ustam’ı indirin:** [1.0.0-beta.2 sürümünde](https://github.com/metapak/ustam-codex-orchestrator/releases/tag/ustam-v1.0.0-beta.2) Windows veya Linux için yerel uygulama ZIP’ini seçin ve tamamını çıkarın: [Windows](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-windows-x86_64.zip) · [Linux](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.2/ustam-1.0.0-beta.2-linux-x86_64.zip).
-2. **Açın:** Windows’ta **Ustam.exe**, Linux’ta **Ustam** dosyasını açın. Mac’te yerel kaynak derlemesi için **Ustam.app** dosyasını açın. Yerel paket Python içerir. Mac uygulaması tek başına taşınabilir; Windows/Linux’ta çıkarılan dosyaları birlikte tutun.
-3. **Uygulamaları seçin:** Codex, Claude Code, OpenCode ve Antigravity arasından kullandıklarınızı seçin. Seçtiğiniz komut satırı araçları kurulu ve giriş yapılmış olmalıdır.
-4. **Projeleri ekleyin:** Yerel tarayıcı sayfasında proje klasörlerini ekleyin; değişiklikleri kontrol edip uygulayın.
+Mac paketi Python içerir ve yerelde kontrol edildi. Apple Developer ID imzası veya notarization yoktur; herkese açık indirmede Gatekeeper kabulü çözülmüş değildir. [Mac kurulum notları](docs/ustam-macos-local-install.tr.md).
 
-Yerel paket imzasızdır; Mac Gatekeeper indirmeyi engelleyebilir. Ayrıntılar ve ileri düzey kaynak/CLI kullanımı: [Ustam yerel merkezi](docs/ustam-hub.tr.md). Kaynak ZIP’ini çalıştırmak ayrıca Python 3.11+ gerektirir. Sağlayıcıların hesap ve model erişimini Ustam sağlamaz.
+Ustam'ı açıp **Proje → Araç → Ekip → Kur** adımlarını izleyin:
+
+1. **Proje:** Yapılandırmak istediğiniz proje klasörünü ekleyin.
+2. **Araç:** O proje için Codex, Claude Code, OpenCode veya Antigravity seçin.
+3. **Ekip:** Hazır veya kayıtlı orkestrayı seçin; isterseniz şefi, yardımcıları ve desteklenen model seçeneklerini ayarlayın.
+4. **Kur:** Değişiklikleri önizleyip projeye kurulumu onaylayın. Kurulum yapay zekâ işi başlatmaz.
+
+Seçilen sağlayıcının CLI'ını ayrıca kurun; gerçek sağlayıcı işi için oturum ve model erişimi gerekir. Kaynak kullanımı Python 3.11+ gerektirir. [Önceki Windows/Linux beta.2 paketleri](https://github.com/metapak/ustam/releases/tag/ustam-v1.0.0-beta.2), Antigravity ve yeni özellikler olmadan önceki üç araçlı sürümü kapsar. Bunlar eski indirmelerdir, beta.5 derlemeleri değildir.
+
+## Araç desteği
+
+| Araç | Proje ekipleri ve modeller | Geri alma | Kaydedilmiş kullanım |
+|---|---|---|---|
+| Codex | Kurulu CLI ve erişilebilir model kataloğu | Yönetilen yapılandırma | Yerel kaydedilmiş kullanım |
+| Claude Code | Kurulu CLI; modele özel effort seçenekleri | Yönetilen yapılandırma | Yerel kaydedilmiş kullanım |
+| OpenCode | Kurulu CLI ve yapılandırılmış sağlayıcılar/modeller | Yok | Desteklenen yerel kayıtlar |
+| Antigravity | `agy` 1.2.16+ ve yerel help kontrolü; `inherit`, `flash`, `pro` | Doğrulanan yönetilen dosyalar ve yedekler | Desteklenmiyor |
+
+Manuel İşler köprüsü dört araçta da bulunur. Antigravity için gözetimsiz Jobs kapalıdır; hesap hakkı, native model çalışması ve native salt okunur şef zorlaması doğrulanmış değildir. Kullanılabilir modeller ve araçlar kurulu CLI'a ve hesaba bağlıdır. [Antigravity ayrıntıları](docs/antigravity.tr.md) · [İşler protokolü](docs/ustam-work-protocol.tr.md).
 
 ## Projeler ve orkestralar
 

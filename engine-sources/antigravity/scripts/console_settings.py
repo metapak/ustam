@@ -102,8 +102,10 @@ def safe(root, name):
     current = root
     for part in p.parts:
         current = current / part
-        if current.is_symlink():
-            raise ValueError('Symlink in provider path refused: ' + name)
+        if current.is_symlink() or (current.exists() and getattr(current.lstat(), 'st_file_attributes', 0) & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0x400)):
+            raise ValueError('Symlink or reparse point in provider path refused: ' + name)
+        if not current.resolve().is_relative_to(root):
+            raise ValueError('Provider path escaped the registered project: ' + name)
         if current != root / p and current.exists() and not current.is_dir():
             raise ValueError('Provider parent is not a directory: ' + name)
     if current.exists() and (not current.is_file() or current.stat().st_size > MAX_FILE):

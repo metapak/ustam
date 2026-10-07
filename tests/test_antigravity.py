@@ -17,14 +17,11 @@ from ustam.runtime import Runtime, RuntimeAttention, resolve_cli
 from ustam.usage_baseline import evidence
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT.parent / 'antigravity-bounded-orchestrator'
-ENGINE = ROOT / 'ustam/engines/antigravity'
-# Frozen/package test environments contain only the verified snapshot.
-SOURCE = SOURCE if (SOURCE / 'scripts/console_settings.py').exists() else ENGINE
+SOURCE = ROOT / 'engine-sources/antigravity'
 
 def load():
     if not (SOURCE / 'scripts/console_settings.py').is_file():
-        raise AssertionError('Antigravity engine source or bundled snapshot is missing')
+        raise AssertionError('Antigravity in-repository engine source is missing')
     spec = importlib.util.spec_from_file_location('antigravity_install_fixture', SOURCE / 'scripts/install.py')
     constants = importlib.util.module_from_spec(spec); spec.loader.exec_module(constants)
     spec = importlib.util.spec_from_file_location('antigravity_settings_fixture', SOURCE / 'scripts/console_settings.py')

@@ -60,7 +60,7 @@ const assert = require('node:assert/strict');
    await page.locator('#project-orchestra-choice').getByLabel('Tool',{exact:true}).selectOption(provider);
    await page.locator('#project-orchestra-choice').getByRole('button',{name:'Choose / create your own orchestra',exact:true}).click();
    await page.locator('#project-orchestra-choice').getByRole('button',{name:'Use for this project',exact:true}).last().click();await flow().waitFor();
-   await install();assert.match(await page.locator('#modal').innerText(),/Projects with team installed: 1 · Not completed: 0/);await close();
+   await install();assert.match(await page.locator('#modal').textContent(),/Projects with team installed: 1 · Not completed: 0/);await close();
   }
   // Batch authorizes only the selected targets. Conflict fails individually and is never applied.
   await ready();await page.getByRole('button',{name:'Select all',exact:true}).click();const hero=page.locator('.hero img');const heroFrame=await hero.screenshot();await page.waitForTimeout(650);assert.equal(heroFrame.equals(await hero.screenshot()),false);motionProof.push({surface:'hero',pixelsChanged:true});

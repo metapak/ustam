@@ -154,6 +154,8 @@ class Hub:
     def orchestras(self, body):
         if body.get('action') == 'save':
             entry = self.orchestra(body.get('orchestra'))
+            if entry['provider'] == 'claude':
+                self.adapters.validate_team('claude', entry)
             def change(data):
                 data['orchestras'] = [p for p in data['orchestras'] if p['id'] != entry['id']] + [entry]
         elif body.get('action') == 'remove':

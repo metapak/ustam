@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Guarded replication of the frozen canonical hub into sibling checkouts.
+"""Legacy developer-only guarded replication; not used by single-repo releases.
 
 Comparison is the default. --apply is for coordinator-approved source freezes.
 Only enumerated generated paths are changed; legacy provider files are preserved.
@@ -15,16 +15,25 @@ MANIFEST = '.ustam-distribution.json'
 FILES = ('engine-sources/antigravity/LICENSE', 'engine-sources/antigravity/NOTICE',
          'engine-sources/antigravity/VERSION', 'engine-sources/antigravity/scripts/install.py',
          'engine-sources/antigravity/scripts/console_settings.py', 'tests/test_antigravity.py',
-         'tests/ustam_antigravity_ui.cjs', 'tests/ustam_install_ui.cjs',
+         'tests/ustam_antigravity_ui.cjs', 'tests/ustam_provider_picker_ui.cjs', 'tests/ustam_install_ui.cjs',
          'docs/antigravity.md', 'docs/antigravity.tr.md', 'ustam/ui/icons.mjs', 'scripts/build_ustam_app.py', 'scripts/build_ustam_engines.py', 'scripts/sync_ustam_distribution.py', 'scripts/install_ustam_macos.py',
          'launchers/Install Ustam.applescript',
          'launchers/launch_ustam.py', 'launchers/ustam_worker.py', '.github/workflows/ustam-app.yml',
          'docs/ustam-hub.md', 'docs/ustam-hub.tr.md',
          'docs/ustam-macos-local-install.md', 'docs/ustam-macos-local-install.tr.md', 'tests/test_ustam_packaging.py',
          'tests/test_ustam_adapters.py', 'tests/test_ustam_hub.py', 'tests/test_ustam_jobs.py',
-         'tests/test_ustam_protocol.py', 'tests/ustam_works_ui.cjs',
+         'tests/test_ustam_protocol.py', 'tests/test_ustam_model_effort.py',
+         'tests/ustam_install_fixture.py', 'tests/ustam_claude_cli_fixture.py',
+         'tests/ustam_model_effort_ui.cjs', 'tests/ustam_works_ui.cjs',
          'tests/test_ustam_lifecycle.py', 'tests/ustam_notice_locale_ui.cjs',
          'docs/ustam-work-protocol.md', 'docs/ustam-work-protocol.tr.md')
+
+# The immutable import inventory explicitly owns every provider source asset.
+_provenance = json.loads((ROOT / 'engine-sources/provenance.json').read_text())
+FILES += ('engine-sources/provenance.json',) + tuple(
+    record['source_prefix'] + '/' + name
+    for record in _provenance['engines'].values() for name in record['files'])
+FILES = tuple(sorted(set(FILES)))
 
 
 def digest(path):

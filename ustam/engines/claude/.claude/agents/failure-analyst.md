@@ -3,7 +3,7 @@ name: failure-analyst
 description: Analyzes one concrete failure after evidence exists and returns a causal explanation.
 tools: Read, Glob, Grep
 disallowedTools: Edit, Write, Bash, Agent
-model: opus
+model: claude-opus-5-5
 effort: high
 ---
 

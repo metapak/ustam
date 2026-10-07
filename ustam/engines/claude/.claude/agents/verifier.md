@@ -3,7 +3,7 @@ name: verifier
 description: Runs focused checks against acceptance criteria and classifies failures without repairing code.
 tools: Read, Glob, Grep, Bash
 disallowedTools: Edit, Write, Agent
-model: sonnet
+model: claude-sonnet-5-5
 effort: high
 ---
 

@@ -6,10 +6,9 @@ import json
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-PINS = {'codex': ('codex-bounded-orchestrator', '46ca3064b7665ebe683b77b496fe5d1fe218bdbc'),
-        'claude': ('claude-bounded-orchestrator', 'aeefd8551d106c9b43e5fc6490fdfee1047aecbc'),
-        'opencode': ('opencode-bounded-orchestrator', 'fa8068f6bc360b6c765570d87d4cf39ffa597f32'),
-        'antigravity': ('codex-bounded-orchestrator', '80613c6c7c11d2a3398b3499a402f328575f0fe0', 'engine-sources/antigravity')}
+SOURCE_REPOSITORY = 'https://github.com/metapak/ustam'
+PINS = {provider: (SOURCE_REPOSITORY, '84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b', 'engine-sources/' + provider)
+        for provider in ('codex', 'claude', 'opencode', 'antigravity')}
 PREFIXES = ('.agents/', '.codex/', '.claude/', '.opencode/', '.antigravity/', 'scripts/', 'templates/', 'presets/')
 TOP = {'VERSION', 'LICENSE', 'NOTICE'}
 
@@ -47,7 +46,7 @@ def build():
     for provider, source in PINS.items():
         name, pin, *prefix = source
         source_prefix = prefix[0] if prefix else ''
-        repo = ROOT.parent / name
+        repo = ROOT
         files = {}
         for relative, data in frozen_files(repo, pin, source_prefix).items():
             destination = ROOT / 'ustam/engines' / provider / relative

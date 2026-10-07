@@ -2,7 +2,7 @@
   "closure": "All tracked runtime/instruction/template/preset/script trees; tests, docs, launchers and setup wrappers are not read by backend APIs.",
   "engines": {
     "antigravity": {
-      "commit": "80613c6c7c11d2a3398b3499a402f328575f0fe0",
+      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "346a6b91dc15e79a09702e7adb693456fd150bfeaf8c4409d88ad059980a4dcf",
@@ -11,30 +11,30 @@
         "scripts/install.py": "d2b030ee2d4d97e313ad6468544cb94b3042a58cb7ec02c38f867642a74acda2"
       },
       "source_prefix": "engine-sources/antigravity",
-      "source_repository": "codex-bounded-orchestrator"
+      "source_repository": "https://github.com/metapak/ustam"
     },
     "claude": {
-      "commit": "aeefd8551d106c9b43e5fc6490fdfee1047aecbc",
+      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
       "files": {
         ".claude/.bounded-orchestrator/.gitignore": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
-        ".claude/agents/acceptance-test-author.md": "33ebfc5337ad8985b0713489f50a6b52c6a270c81ce7e5366d1b35d62797960b",
-        ".claude/agents/advisor.md": "23218fe4a22afdba131e56ad1864bc20a54a906a2a897ae588c1755581221a9f",
-        ".claude/agents/explorer.md": "a82064397db818a1d1f18591ed5c015558fc8ca5a682a7fbe3f3a8b4952bd84c",
-        ".claude/agents/failure-analyst.md": "6af5580274f9c7df0d14101594ef2bf9798bea5fd6d784453652c24464016314",
-        ".claude/agents/implementer.md": "d4d51814f17a917313685bfadb28e537d49d3722227ce22c8062b419ee6e8dd3",
-        ".claude/agents/qa-operator.md": "362aea6870e6bf8523d5e209f34964fe714989c352ab50040373f3e4aa4a528c",
-        ".claude/agents/researcher.md": "acc93051a0d14dc552942a4c524e3af07353c04c200a6c30b656902a8333efc7",
-        ".claude/agents/reviewer.md": "b5b56a7ba7cf8c9383d2df14e36152efef3c72449ac24efb04b76348afd69a3c",
-        ".claude/agents/verifier.md": "8e33d588d2f4327f4f8016a214d7c6a5d515fceea52ecbfeeeb3eea292a95b32",
+        ".claude/agents/acceptance-test-author.md": "bc91d4ae3bcb48d57489f857de56698378dc67d2bc7ea75aee717d375bb96771",
+        ".claude/agents/advisor.md": "1447443a56686a7ec20aa87bd6b58c51220839d3a64568ee11a3d701524ab2b2",
+        ".claude/agents/explorer.md": "46a0ee430a798dc3dd115347f46b20451a62b7cc6cfe2eba4c5554198e92879b",
+        ".claude/agents/failure-analyst.md": "ac120881684e0d7055a712e99cebe8ba5cbd368f58895b349a0a5b28e49d1ad5",
+        ".claude/agents/implementer.md": "4832c3f8889dab2962b6dbccec6e2c3f7348fc3981777129fa9539bae0c67f24",
+        ".claude/agents/qa-operator.md": "f608977b4d0a662057b72017b9b591b112c334d965f81bd51bfffc5a7de4eaff",
+        ".claude/agents/researcher.md": "063ab0752a26774b42db91e4b046e152d66df260ae97b48cbdbab2e55cff7b6b",
+        ".claude/agents/reviewer.md": "a820b77514e7e6c79ffd53e8ef0025fe70c06fda66069241033fdb3d3bd2f9fc",
+        ".claude/agents/verifier.md": "4bb2b4469c7e7bed30c7c012a89150f3293ecf6d9182982d1aa6c9e529ea4aaf",
         ".claude/bounded-orchestrator.eval.example.json": "38e06bf72a576829d544eb1264e8790738c0e9bb9c17890ec2e14b75609b2207",
-        ".claude/settings.json": "957ceb7d4ea55af9897753707c4c478a8c5e1bef8cbf34b2c58947d170ebce64",
+        ".claude/settings.json": "86c198da36af7b79334b24d6f2fd64c5866f7c362fcf4cb38b49c089a0b4592d",
         ".claude/skills/secure-change/SKILL.md": "867bf14f9540842ef85004928e80a8576b3157fdc4fb58e4a71c1032ad096b6f",
         ".claude/skills/ui-design/SKILL.md": "51c0427cc1d1377d3d61897d2ef5538b96dac59899a2d18a66c1f80c0387dcc1",
-        ".claude/tools/console/app.js": "1abd29efd2088fae758b696ddd7d89791b5a10d4a89ae19a27d86c676da87d58",
+        ".claude/tools/console/app.js": "fdafa5b6066c641821fba797098581d44384824f43e3747a04544a60b31dbb09",
         ".claude/tools/console/index.html": "08caf4ab990fef42b61c1f18e9bdee8662628ecc325f9fd9731a3662b885f0df",
         ".claude/tools/console/orchestra.svg": "93a713f5de47f227e599f615c9c5b9df51b35e0a1c7ccdab1bb9ad132b2070e3",
         ".claude/tools/console/style.css": "4f8d0991b52abc2c36471b8e2f8448eb7bc0ad993722b1b301dfb1fd8073eb36",
-        ".claude/tools/console_settings.py": "4705c929fab4f458d9471ee3ba8810d96a1ec7dcf246f6cefa20e4df4b68f7e1",
+        ".claude/tools/console_settings.py": "75e8e5c1e5d9cab0d2cd8a6540d90915ca6951872ad69402acd52e3ca85a28ff",
         ".claude/tools/deepseek_mcp.py": "91185b6da857123fb8dcd915c3fa3bde825e7cdc00abc58999c210b453d86ea2",
         ".claude/tools/local_eval.py": "dc21d0405b176f880aa3b3b29dfc743f5d79c5ece2274708b14f65d875513bbc",
         ".claude/tools/openai_mcp.py": "746f640a2fd5be5c3032eff45e937296881f059ce8b14607dd35faff5f57945c",
@@ -51,16 +51,19 @@
         "scripts/build_ustam_engines.py": "e788ff921b4c3f331c1baa0f5e558c3ab71d52d240e122f6182b40c0bbe29634",
         "scripts/configure.py": "1eb80fbd0907880789097f031ca37e91874ead43e30b18f2c04d4bd844468514",
         "scripts/install.ps1": "4efade951d0c063643942dfb7912e230b39c498b5f76c609258cbbc41b98ff4f",
-        "scripts/install.py": "db87077ae6e712fc835cae8a215657c246925fdf57a9f7bf21e676af277ca289",
+        "scripts/install.py": "55403e462ed2960b672d287446715cb4496760df028c8efeafe3cb5139948f75",
         "scripts/install.sh": "d4507dea40f349c56c9c51204314829cca39f1e7986ab137a0ed9366b7a03dd4",
         "scripts/install_ustam_macos.py": "10957005fc2bd677d45cedd75f20e8d2a13d96e271ef95c61492fe2a417f77b7",
+        "scripts/model_capabilities.py": "ce83ceef55d018dc81a5ceec72899cbf105755aff8a3da959c7446c9d9b6d185",
         "scripts/sync_ustam_distribution.py": "88b1def761f7ab3c0783713e8a6448275de8a3d91bd616a8eb36014905598e3d",
-        "scripts/validate.py": "e72bc8767d90f1d1cad3ab67b00ba68cd133e7a03029efcaaa9a9009edc26f31",
+        "scripts/validate.py": "89ee58b444c4fe61f1a09d574ff4b06e0e70f7cd3e2733f946415c98e7d1e7af",
         "templates/CLAUDE.block.md": "f1a0ef00417e2052fa6c9cf8ecc632963a4027661e1c6dd16f2a0e2db7c9ee13"
-      }
+      },
+      "source_prefix": "engine-sources/claude",
+      "source_repository": "https://github.com/metapak/ustam"
     },
     "codex": {
-      "commit": "46ca3064b7665ebe683b77b496fe5d1fe218bdbc",
+      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
       "files": {
         ".agents/skills/bounded-orchestrator-security-review/SKILL.md": "0c66ee5160b05d33d64857e4cf9e4a0e149938706fb8cd6e95f8bb08d1e48d8b",
         ".agents/skills/bounded-orchestrator-ui-design/SKILL.md": "7dfc170ca65ccbba4d477903232d14533842ceaf0b941d516dec7abbd24c3441",
@@ -112,10 +115,12 @@
         "scripts/sync_ustam_distribution.py": "88b1def761f7ab3c0783713e8a6448275de8a3d91bd616a8eb36014905598e3d",
         "scripts/validate.py": "2beb09684de4afc5d878d130ee9dee992fd8d53d1883a964226ff2d0398af00d",
         "templates/AGENTS.block.md": "890bdeb0ecfe1d96015d6c3dd55fc8df6764a4866eee8dedeb20a7372d2e7ded"
-      }
+      },
+      "source_prefix": "engine-sources/codex",
+      "source_repository": "https://github.com/metapak/ustam"
     },
     "opencode": {
-      "commit": "fa8068f6bc360b6c765570d87d4cf39ffa597f32",
+      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
       "files": {
         ".opencode/.bounded-orchestrator/.gitignore": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
         ".opencode/.candidate/.gitignore": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
@@ -164,7 +169,9 @@
         "scripts/sync_ustam_distribution.py": "88b1def761f7ab3c0783713e8a6448275de8a3d91bd616a8eb36014905598e3d",
         "scripts/validate.py": "c0039e567ac70fb4ed301d4c31e0413af8de65d51d08e26c4bfdc75faa40714e",
         "templates/AGENTS.block.md": "962c7db979fd2f77926ac0a530fab049327a5c29049429268fff45682d50d02f"
-      }
+      },
+      "source_prefix": "engine-sources/opencode",
+      "source_repository": "https://github.com/metapak/ustam"
     }
   },
   "schema": 1

@@ -10,17 +10,19 @@ from ustam.adapters import AdapterManager
 from ustam.core import Hub
 from ustam.runtime import RuntimeAttention
 from ustam.server import UstamServer
+from ustam_claude_cli_fixture import create_version_only_cli, resolver
 
 with tempfile.TemporaryDirectory(prefix='ustam-install-ui-') as directory:
     root = Path(directory)
-    with patch('ustam.adapters.resolve_cli', side_effect=RuntimeAttention('offline fixture')):
+    fixture_cli = create_version_only_cli(root)
+    with patch('ustam.adapters.resolve_cli', side_effect=resolver(fixture_cli)):
         hub = Hub(root / 'state', adapters=AdapterManager())
         for name in ('Alpha', 'Beta'):
             target = root / name
             target.mkdir()
             hub.projects({'action': 'add', 'path': str(target)})
         teams = {}
-        for provider, model in (('codex', 'gpt-6.1-sol'), ('claude', 'sonnet'), ('opencode', 'openai/gpt-6.1-sol')):
+        for provider, model in (('codex', 'gpt-6.1-sol'), ('claude', 'claude-sonnet-5-5'), ('opencode', 'openai/gpt-6.1-sol')):
             effort = '' if provider == 'opencode' else 'medium'
             team = {'id': provider+'-team', 'name': provider+' team', 'provider': provider,
                     'chief': {'model': model, 'effort': effort}, 'helpers': [

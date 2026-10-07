@@ -11,15 +11,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 AGENTS = {"acceptance-test-author", "explorer", "researcher", "implementer", "verifier", "failure-analyst", "qa-operator", "reviewer", "advisor"}
 EXPECTED_ROUTING = {
-    "acceptance-test-author": ("sonnet", "medium"),
-    "explorer": ("sonnet", "medium"),
-    "researcher": ("sonnet", "medium"),
-    "implementer": ("sonnet", "high"),
-    "verifier": ("sonnet", "high"),
-    "qa-operator": ("sonnet", "high"),
-    "failure-analyst": ("opus", "high"),
-    "reviewer": ("opus", "high"),
-    "advisor": ("opus", "xhigh"),
+    "acceptance-test-author": ("claude-sonnet-5-5", "medium"),
+    "explorer": ("claude-sonnet-5-5", "medium"),
+    "researcher": ("claude-sonnet-5-5", "medium"),
+    "implementer": ("claude-sonnet-5-5", "high"),
+    "verifier": ("claude-sonnet-5-5", "high"),
+    "qa-operator": ("claude-sonnet-5-5", "high"),
+    "failure-analyst": ("claude-opus-5-5", "high"),
+    "reviewer": ("claude-opus-5-5", "high"),
+    "advisor": ("claude-opus-5-5", "xhigh"),
 }
 
 CLAUDE_MODEL_ALIASES = {"opus", "sonnet", "haiku", "fable"}
@@ -50,8 +50,8 @@ def main() -> int:
             errors.append(f"missing {name}")
     try:
         settings = json.loads((ROOT / ".claude/settings.json").read_text(encoding="utf-8"))
-        if settings.get("model") != "opus":
-            errors.append("main owner model must be opus")
+        if settings.get("model") != "claude-opus-5-5":
+            errors.append("main owner model must be claude-opus-5-5")
         if settings.get("effortLevel") != "xhigh":
             errors.append("main owner effortLevel must be xhigh")
         if settings.get("env", {}).get("CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH") != "1":

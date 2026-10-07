@@ -3,7 +3,7 @@ name: acceptance-test-author
 description: Authors acceptance packs before production implementation.
 tools: Read, Glob, Grep, Bash
 disallowedTools: Edit, Write, Agent
-model: sonnet
+model: claude-sonnet-5-5
 effort: medium
 ---
 Own only the delegated acceptance pack and temporary examples. Never edit production source.

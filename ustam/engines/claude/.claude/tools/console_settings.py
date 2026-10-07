@@ -77,7 +77,7 @@ class Settings:
             raise ValueError('Invalid helper slot ID')
         return Path('.claude/agents') / ('orchestra-' + slot_id + '.md')
 
-    def roster(self, manifest):
+    def roster(self, manifest, *, strict=False):
         raw = manifest.get('roster', [])
         if not isinstance(raw, list) or len(raw) > 99:
             raise ValueError('Invalid saved helper team')
@@ -90,7 +90,10 @@ class Settings:
             if not isinstance(item['label'], str) or not LABEL.fullmatch(item['label']):
                 raise ValueError('Invalid saved helper label')
             self.i.validate_claude_model(item['model'], item['id'])
-            self.i.validate_effort(item['effort'], item['id'], self.i.CLAUDE_EFFORTS)
+            if strict:
+                self.i.validate_model_effort(item['model'], item['effort'], item['id'])
+            elif item['effort']:
+                self.i.validate_effort(item['effort'], item['id'], self.i.CLAUDE_EFFORTS)
             result.append(dict(item))
         return result
 
@@ -107,7 +110,7 @@ class Settings:
                      'Use these configured helper names for delegated execution; their count is capacity, not a requirement to spawn all at once. Assign one writer per scope. The main session only coordinates and reads short reports.']
             for slot in roster:
                 label = (' — ' + json.dumps(slot['label'], ensure_ascii=False)) if slot['label'] else ''
-                lines.append(f"- `orchestra-{slot['id']}`: {slot['role']}{label}; model `{slot['model']}`, effort `{slot['effort']}`")
+                lines.append(f"- `orchestra-{slot['id']}`: {slot['role']}{label}; model `{slot['model']}`, effort `{slot['effort'] or 'default'}`")
             block = block.replace(self.i.END_MARKER, '\n'.join(lines) + '\n' + self.i.END_MARKER)
         return (cleaned.rstrip() + '\n\n' + block + '\n').lstrip('\n')
 
@@ -119,7 +122,7 @@ class Settings:
         routing = {}
         for role in self.i.ROLES:
             if role == 'owner':
-                routing[role] = {'model': settings.get('model', 'opus'), 'effort': settings.get('effortLevel', 'xhigh')}
+                routing[role] = {'model': settings.get('model', 'opus'), 'effort': settings.get('effortLevel', '')}
             else:
                 path = self.path(Path('.claude/agents') / (role + '.md'))
                 fields = {}
@@ -127,13 +130,14 @@ class Settings:
                     header = path.read_text(encoding='utf-8').split('\n---\n', 1)[0]
                     fields = dict(line.split(':', 1) for line in header.splitlines() if ':' in line)
                 default = self.i.PRESETS['balanced'][role]
-                routing[role] = {'model': fields.get('model', default[0]).strip(), 'effort': fields.get('effort', default[1]).strip()}
+                routing[role] = {'model': fields.get('model', default[0]).strip(), 'effort': fields.get('effort', '' if path.exists() else default[1]).strip()}
         try:
             self.i.require_secure_uninstall_backend()
             uninstall_supported = True
         except self.i.InstallError:
             uninstall_supported = False
         return {'target': str(self.target), 'scope': 'project', 'preset': manifest.get('preset', 'custom'),
+                'model_catalog': {'models': [self.i.model_capabilities.capabilities(model) for model in self.i.model_capabilities.CATALOG_MODELS], 'source': 'official Claude model docs', 'account_access_verified': False},
                 'routing': routing, 'max_parallelism': settings.get('env', {}).get(CONCURRENCY),
                 'roster': roster, 'roster_read_only': len(roster) > 50,
                 'installed': bool(manifest.get('files')), 'uninstall_supported': uninstall_supported,
@@ -261,7 +265,7 @@ class Settings:
             if not isinstance(model, str) or not isinstance(effort, str):
                 raise ValueError('Model and effort must be text')
             self.i.validate_claude_model(model, role)
-            self.i.validate_effort(effort, role, self.i.CLAUDE_OWNER_EFFORTS if role == 'owner' else self.i.CLAUDE_EFFORTS)
+            self.i.validate_model_effort(model, effort, role, chief=role == 'owner')
             selected[role] = model, effort
         count = payload.get('max_parallelism')
         if type(count) is not int or not 1 <= count <= 20:
@@ -276,7 +280,8 @@ class Settings:
         roster = payload.get('roster', old_roster)
         if not isinstance(roster, list) or (not 1 <= len(roster) <= 50 and roster != old_roster):
             raise ValueError('Choose 1 to 50 helpers; an existing larger team is read-only')
-        roster = self.roster({'roster': roster})
+        roster = self.roster({'roster': roster}, strict=True)
+        self.i.check_model_cli_versions([pair[0] for pair in selected.values()] + [item['model'] for item in roster])
         if len(old_roster) > 50 and roster != old_roster:
             raise ValueError('Existing larger helper team is read-only')
         initial = not manifest.get('files')
@@ -323,13 +328,18 @@ class Settings:
         settings = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
         if not isinstance(settings, dict) or not isinstance(settings.get('env', {}), dict):
             raise ValueError('Settings and env must be JSON objects')
-        settings['model'], settings['effortLevel'] = selected['owner']
+        settings['model'], owner_effort = selected['owner']
+        if owner_effort:
+            settings['effortLevel'] = owner_effort
+        else:
+            settings.pop('effortLevel', None)
         settings.setdefault('env', {})[CONCURRENCY] = str(count)
         if initial:
             settings['env'].setdefault('CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH', '1')
         changes[self.i.SETTINGS_RELATIVE.as_posix()] = json.dumps(settings, indent=2) + '\n'
         # Only changed fields are returned; unrelated settings and secrets never enter API responses.
-        preview = {'routing': routing, 'max_parallelism': count, 'target': str(self.target),
+        preview = {'model_catalog': {'models': [self.i.model_capabilities.capabilities(model) for model in self.i.model_capabilities.CATALOG_MODELS], 'source': 'official Claude model docs', 'account_access_verified': False},
+                'routing': routing, 'max_parallelism': count, 'target': str(self.target),
                    'roster': roster, 'files': list(changes), 'removed_files': [name for name, content in changes.items() if content is None], 'initial_install': initial,
                    'installation': 'First Save installs the managed toolkit with existing installer conflict/backups rules; restore keeps this initial installation.' if initial else 'Existing installation',
                    'preserved': 'All unrelated settings keys, env and agent bodies'}

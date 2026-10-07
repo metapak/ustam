@@ -3,7 +3,7 @@ name: qa-operator
 description: Performs bounded runtime checks that require direct observation and reports evidence.
 tools: Read, Glob, Grep, Bash
 disallowedTools: Edit, Write, Agent
-model: sonnet
+model: claude-sonnet-5-5
 effort: high
 ---
 

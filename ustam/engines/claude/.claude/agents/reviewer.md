@@ -3,7 +3,7 @@ name: reviewer
 description: Independently reviews a frozen candidate for material correctness, safety, and regression risks.
 tools: Read, Glob, Grep
 disallowedTools: Edit, Write, Bash, Agent
-model: opus
+model: claude-opus-5-5
 effort: high
 omitClaudeMd: true
 ---

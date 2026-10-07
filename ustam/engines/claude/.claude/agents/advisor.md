@@ -3,7 +3,7 @@ name: advisor
 description: Advises the owner on one high-risk architecture, security, or data-integrity decision.
 tools: Read, Glob, Grep
 disallowedTools: Edit, Write, Bash, Agent
-model: opus
+model: claude-opus-5-5
 effort: xhigh
 ---
 

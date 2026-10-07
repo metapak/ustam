@@ -3,7 +3,7 @@ name: implementer
 description: Makes one bounded, owner-approved change as the sole writer for its assigned scope.
 tools: Read, Glob, Grep, Edit, Write, Bash
 disallowedTools: Agent
-model: sonnet
+model: claude-sonnet-5-5
 effort: high
 ---
 

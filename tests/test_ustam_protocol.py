@@ -14,8 +14,8 @@ from ustam.protocol import WorkProtocol, ProtocolError, digest, snapshot
 
 
 def provider_fixture_root(source, provider):
-    """Use this checkout's provider or its self-contained vendored engine."""
-    repo = source if (source / ('.' + provider)).is_dir() else source / 'ustam' / 'engines' / provider
+    """Use only this checkout's canonical immutable provider source prefix."""
+    repo = source / 'engine-sources' / provider
     for name in ('scripts/install.py', '.' + provider + '/tools/work_protocol.py', '.' + provider + '/tools/work_protocol_core.py'):
         if not (repo / name).is_file():
             raise AssertionError('Missing ' + provider + ' protocol fixture: ' + str(repo / name))
@@ -527,7 +527,12 @@ class ProtocolTests(unittest.TestCase):
             target.mkdir()
             command = [sys.executable, str(repo/'scripts/install.py')]
             command += ['--target',str(target),'--action','install','--profile','balanced'] if provider=='opencode' else [str(target)]
-            process = subprocess.run(command, cwd=repo, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+            environment = None
+            if provider == 'claude':
+                from ustam_claude_cli_fixture import create_version_only_cli
+                metadata_cli = create_version_only_cli(self.root / 'source-cli-fixture')
+                environment = dict(os.environ, PATH=str(metadata_cli.parent) + os.pathsep + os.environ.get('PATH', ''))
+            process = subprocess.run(command, cwd=repo, env=environment, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
             self.assertEqual(process.returncode, 0, provider+process.stdout+process.stderr)
             tools = target / ('.'+provider) / 'tools'
             self.assertTrue((tools/'work_protocol.py').is_file())

@@ -19,7 +19,7 @@ from ustam.adapter_worker import Engine, verify_engine
 ROOT = Path(__file__).resolve().parents[1]
 
 def payload(provider):
-    model = {'codex': 'gpt-6.1-sol', 'claude': 'sonnet', 'opencode': 'openai/gpt-6.1-sol'}[provider]
+    model = {'codex': 'gpt-6.1-sol', 'claude': 'claude-sonnet-5-5', 'opencode': 'openai/gpt-6.1-sol'}[provider]
     return {'provider': provider, 'chief': {'model': model, 'effort': '' if provider == 'opencode' else 'medium'},
             'helpers': [{'id': 'one', 'role': 'implementer', 'name': 'Implementation', 'model': model,
                          'effort': '' if provider == 'opencode' else 'medium'}], 'concurrency': 1, 'profile': 'balanced', 'task_type': 'implementation'}
@@ -33,7 +33,9 @@ class AdapterTests(unittest.TestCase):
         # Catalog discovery is read-only, but these deterministic fixtures stay offline.
         self.env = patch.dict(os.environ, {'PATH': ''})
         self.env.start()
-        self.offline = patch('ustam.adapters.resolve_cli', side_effect=RuntimeAttention('offline fixture'))
+        from ustam_claude_cli_fixture import create_version_only_cli, resolver
+        self.fixture_cli = create_version_only_cli(Path(self.temporary.name))
+        self.offline = patch('ustam.adapters.resolve_cli', side_effect=resolver(self.fixture_cli))
         self.offline.start()
 
     def tearDown(self):
@@ -157,8 +159,26 @@ class AdapterTests(unittest.TestCase):
             lock.release()
             self.manager._sessions.clear()
 
+    def test_all_provider_sources_are_self_contained_and_match_runtime_closures(self):
+        manifest = json.loads((ROOT / 'ustam/engine-manifest.json').read_text())
+        self.assertEqual(set(manifest['engines']), {'codex', 'claude', 'opencode', 'antigravity'})
+        repositories = set()
+        for provider, entry in manifest['engines'].items():
+            self.assertEqual(entry['source_prefix'], 'engine-sources/' + provider)
+            source = ROOT / entry['source_prefix']
+            self.assertTrue(source.is_dir())
+            self.assertFalse(source.is_symlink())
+            self.assertTrue(source.resolve().is_relative_to(ROOT.resolve()))
+            repositories.add(entry['source_repository'])
+            for relative, expected in entry['files'].items():
+                path = source / relative
+                self.assertTrue(path.is_file(), str(path))
+                self.assertFalse(path.is_symlink(), str(path))
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected, str(path))
+        self.assertEqual(repositories, {'https://github.com/metapak/ustam'})
+
     def test_manifest_closure_verified(self):
-        for provider in ('codex', 'claude', 'opencode'):
+        for provider in ('codex', 'claude', 'opencode', 'antigravity'):
             self.assertTrue(verify_engine(provider).is_dir())
 
     def test_integrity_rejects_tampering_and_extra_assets(self):
@@ -254,11 +274,11 @@ class AdapterTests(unittest.TestCase):
         preview = self.manager.preview('claude', self.target, payload('claude'))
         self.manager.apply('claude', self.target, preview['preview_id'])
         changed = payload('claude')
-        changed['chief']['model'] = 'opus'
+        changed['chief']['model'] = 'claude-opus-5-5'
         preview = self.manager.preview('claude', self.target, changed)
         self.manager.apply('claude', self.target, preview['preview_id'])
         self.manager.restore('claude', self.target, {})
-        self.assertEqual(self.manager.inspect('claude', self.target)['chief']['model'], 'sonnet')
+        self.assertEqual(self.manager.inspect('claude', self.target)['chief']['model'], 'claude-sonnet-5-5')
 
     def test_claude_real_adapter_restore_preserves_usage_installation_identity(self):
         from ustam.core import Hub
@@ -281,6 +301,7 @@ class AdapterTests(unittest.TestCase):
         changed = payload('claude')
         changed.update(id='claude-regression', name='Claude regression')
         changed['chief']['model'] = 'haiku'
+        changed['chief']['effort'] = ''
         preview = hub.batch('preview', {'provider':'claude','project_ids':[ident],'payload':changed})['results'][0]
         self.assertTrue(preview['ok'], preview)
         applied = hub.apply({'preview_ids':[preview['preview_id']]})['results'][0]
@@ -288,7 +309,7 @@ class AdapterTests(unittest.TestCase):
         self.assertNotEqual(json.loads(manifest_path.read_text())['installed_at'], manifest['installed_at'])
         restored = hub.batch('restore', {'provider':'claude','project_ids':[ident],'payload':{}})['results'][0]
         self.assertTrue(restored['ok'], restored)
-        self.assertEqual(self.manager.inspect('claude', self.target)['chief']['model'], 'sonnet')
+        self.assertEqual(self.manager.inspect('claude', self.target)['chief']['model'], 'claude-sonnet-5-5')
         self.assertEqual(manifest_path.read_bytes(), original)
         after = hub.installations.read()['usage_installations'][ident]['claude']
         self.assertEqual(after, prior)
@@ -348,7 +369,7 @@ class AdapterTests(unittest.TestCase):
                 self.assertEqual(recommendation['role_models']['implementer'], 'gpt-6.1-sol')
                 self.assertEqual(recommendation['concurrency'], 4)
             elif provider == 'claude':
-                self.assertEqual(recommendation['chief'], {'model': 'opus', 'effort': 'xhigh'})
+                self.assertEqual(recommendation['chief'], {'model': 'claude-opus-5-5', 'effort': 'xhigh'})
                 self.assertIsNone(recommendation['concurrency'])
             else:
                 self.assertIsNone(recommendation['chief'])

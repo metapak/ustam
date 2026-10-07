@@ -152,6 +152,9 @@ class AdapterManager:
     def apply(self, provider, target, preview_id): return self._call(provider, target, 'apply', {'preview_id': preview_id})
     def restore(self, provider, target, payload): return self._call(provider, target, 'restore', payload)
     def usage(self, provider, target): return self._call(provider, target, 'usage')
+    def validate_team(self, provider, team):
+        return self._call(provider, self._scratch.name, 'validate_team', {'chief': team['chief'], 'helpers': team['helpers']})
+
     def models(self, provider, target=None): return self._call(provider, target or self._scratch.name, 'models')
 
     def close(self):

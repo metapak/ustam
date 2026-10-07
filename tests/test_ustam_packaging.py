@@ -66,6 +66,36 @@ class PackagingTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Empty'):
                 engine_builder.frozen_files(ROOT, 'a'*40, 'engine-sources/antigravity')
 
+    def test_single_repository_pins_match_origin_inventory(self):
+        import hashlib
+        provenance = json.loads((ROOT/'engine-sources/provenance.json').read_text())
+        self.assertEqual(set(engine_builder.PINS), set(provenance['engines']))
+        commits = {record[1] for record in engine_builder.PINS.values()}
+        self.assertEqual(len(commits), 1)
+        for provider, (repository, commit, prefix) in engine_builder.PINS.items():
+            self.assertEqual(repository, 'https://github.com/metapak/ustam')
+            self.assertEqual(prefix, 'engine-sources/' + provider)
+            frozen = engine_builder.frozen_files(ROOT, commit, prefix)
+            record = provenance['engines'][provider]
+            self.assertEqual(set(frozen), set(record['files']))
+            for name, data in frozen.items():
+                self.assertEqual(hashlib.sha256(data).hexdigest(), record['files'][name]['sha256'])
+                self.assertIn(prefix+'/'+name, syncer.FILES)
+                self.assertEqual(data, (ROOT/'ustam/engines'/provider/name).read_bytes())
+
+    def test_engine_regeneration_uses_primary_checkout_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            primary = Path(directory)/'arbitrary-checkout-name'
+            primary.mkdir()
+            with patch.object(engine_builder, 'ROOT', primary), patch.object(engine_builder, 'frozen_files', return_value={'VERSION': b'fixture'}) as reader:
+                engine_builder.build()
+            self.assertEqual(reader.call_count, 4)
+            self.assertTrue(all(call.args[0] == primary for call in reader.call_args_list))
+            manifest = json.loads((primary/'ustam/engine-manifest.json').read_text())
+            for provider, record in manifest['engines'].items():
+                self.assertEqual(record['source_repository'], 'https://github.com/metapak/ustam')
+                self.assertEqual(record['source_prefix'], 'engine-sources/'+provider)
+
     def test_startup_notice_is_bounded_and_closed_on_ready_or_timeout(self):
         from unittest.mock import Mock
         process = Mock()
@@ -463,7 +493,10 @@ class PackagingTests(unittest.TestCase):
             else:
                 agy.write_text('#!/bin/sh\ncase "$1" in\n--version) printf "1.2.16\\n";;\n--help) printf "%s\\n" "--agent --model --output-format agents";;\n*) exit 9;;\nesac\n')
                 agy.chmod(0o755)
-            # The fixture implements only help/version, never an agent/model call.
+            from ustam_claude_cli_fixture import create_version_only_cli
+            import shutil
+            shutil.copy2(create_version_only_cli(Path(directory)), bins / 'claude')
+            # Both fixtures implement only help/version, never an agent/model call.
             env = {**os.environ, 'PATH': str(bins), 'HOME': directory, 'USERPROFILE': directory, 'LOCALAPPDATA': directory, 'APPDATA': directory, 'PYTHONPATH': '', 'PYTHONHOME': ''}
             process = subprocess.Popen([worker, '--no-browser', '--state-dir', str(state)],
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env, cwd='/' if os.name != 'nt' else directory)
@@ -494,7 +527,7 @@ class PackagingTests(unittest.TestCase):
                     request('/api/projects', {'action':'add', 'path':str(project)}, csrf)
                     registered = request('/api/bootstrap')['projects']
                     ident = next(p['id'] for p in registered if p['path'] == str(project.resolve()))
-                    model = {'codex':'gpt-6.1-sol', 'claude':'sonnet', 'opencode':'openai/gpt-6.1-sol', 'antigravity':'pro'}[provider]
+                    model = {'codex':'gpt-6.1-sol', 'claude':'claude-sonnet-5-5', 'opencode':'openai/gpt-6.1-sol', 'antigravity':'pro'}[provider]
                     payload = {'name': 'Offline package check', 'provider': provider, 'chief': {'model': model, 'effort': '' if provider in ('opencode', 'antigravity') else 'medium'},
                                'helpers': [{'id':'one', 'role':'implementer', 'name':'Implementation', 'model':model, 'effort': '' if provider in ('opencode', 'antigravity') else 'medium'}],
                                'concurrency':1, 'profile':'balanced'}

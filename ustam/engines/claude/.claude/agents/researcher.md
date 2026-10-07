@@ -3,7 +3,7 @@ name: researcher
 description: Verifies current external facts and official documentation needed for a bounded decision.
 tools: Read, Glob, Grep, WebFetch, WebSearch
 disallowedTools: Edit, Write, Bash, Agent
-model: sonnet
+model: claude-sonnet-5-5
 effort: medium
 ---
 

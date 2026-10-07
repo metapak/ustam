@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import model_capabilities
 import hashlib
 import json
 import os
@@ -12,6 +13,7 @@ import secrets
 import shutil
 import stat
 import sys
+import subprocess
 import shlex
 import tempfile
 from datetime import datetime, timezone
@@ -85,52 +87,52 @@ ROLE_LABELS = {
 }
 PRESETS = {
     "balanced": {
-        "owner": ("opus", "xhigh"),
-        "explorer": ("sonnet", "medium"),
-        "researcher": ("sonnet", "medium"),
-        "implementer": ("sonnet", "high"),
-        "verifier": ("sonnet", "high"),
-        "failure-analyst": ("opus", "high"),
-        "qa-operator": ("sonnet", "high"),
-        "reviewer": ("opus", "high"),
-        "advisor": ("opus", "xhigh"),
+        "owner": ("claude-opus-5-5", "xhigh"),
+        "explorer": ("claude-sonnet-5-5", "medium"),
+        "researcher": ("claude-sonnet-5-5", "medium"),
+        "implementer": ("claude-sonnet-5-5", "high"),
+        "verifier": ("claude-sonnet-5-5", "high"),
+        "failure-analyst": ("claude-opus-5-5", "high"),
+        "qa-operator": ("claude-sonnet-5-5", "high"),
+        "reviewer": ("claude-opus-5-5", "high"),
+        "advisor": ("claude-opus-5-5", "xhigh"),
     },
     "quality": {
-        "owner": ("opus", "xhigh"),
-        "explorer": ("opus", "high"),
-        "researcher": ("opus", "high"),
-        "implementer": ("opus", "xhigh"),
-        "verifier": ("opus", "xhigh"),
-        "failure-analyst": ("opus", "xhigh"),
-        "qa-operator": ("opus", "high"),
-        "reviewer": ("opus", "xhigh"),
-        "advisor": ("opus", "xhigh"),
+        "owner": ("claude-opus-5-5", "xhigh"),
+        "explorer": ("claude-opus-5-5", "high"),
+        "researcher": ("claude-opus-5-5", "high"),
+        "implementer": ("claude-opus-5-5", "xhigh"),
+        "verifier": ("claude-opus-5-5", "xhigh"),
+        "failure-analyst": ("claude-opus-5-5", "xhigh"),
+        "qa-operator": ("claude-opus-5-5", "high"),
+        "reviewer": ("claude-opus-5-5", "xhigh"),
+        "advisor": ("claude-opus-5-5", "xhigh"),
     },
     "economy": {
-        "owner": ("sonnet", "medium"),
-        "explorer": ("sonnet", "low"),
-        "researcher": ("sonnet", "low"),
-        "implementer": ("sonnet", "medium"),
-        "verifier": ("sonnet", "medium"),
-        "failure-analyst": ("sonnet", "medium"),
-        "qa-operator": ("sonnet", "medium"),
-        "reviewer": ("sonnet", "medium"),
-        "advisor": ("sonnet", "high"),
+        "owner": ("claude-sonnet-5-5", "medium"),
+        "explorer": ("claude-sonnet-5-5", "low"),
+        "researcher": ("claude-sonnet-5-5", "low"),
+        "implementer": ("claude-sonnet-5-5", "medium"),
+        "verifier": ("claude-sonnet-5-5", "medium"),
+        "failure-analyst": ("claude-sonnet-5-5", "medium"),
+        "qa-operator": ("claude-sonnet-5-5", "medium"),
+        "reviewer": ("claude-sonnet-5-5", "medium"),
+        "advisor": ("claude-sonnet-5-5", "high"),
     },
     "quota-saver": {
-        "owner": ("sonnet", "low"),
-        "explorer": ("sonnet", "low"),
-        "researcher": ("sonnet", "low"),
-        "implementer": ("sonnet", "medium"),
-        "verifier": ("sonnet", "medium"),
-        "failure-analyst": ("sonnet", "medium"),
-        "qa-operator": ("sonnet", "medium"),
-        "reviewer": ("sonnet", "medium"),
-        "advisor": ("sonnet", "medium"),
+        "owner": ("claude-sonnet-5-5", "low"),
+        "explorer": ("claude-sonnet-5-5", "low"),
+        "researcher": ("claude-sonnet-5-5", "low"),
+        "implementer": ("claude-sonnet-5-5", "medium"),
+        "verifier": ("claude-sonnet-5-5", "medium"),
+        "failure-analyst": ("claude-sonnet-5-5", "medium"),
+        "qa-operator": ("claude-sonnet-5-5", "medium"),
+        "reviewer": ("claude-sonnet-5-5", "medium"),
+        "advisor": ("claude-sonnet-5-5", "medium"),
     },
 }
 for _profile in PRESETS.values():
-    _profile["acceptance-test-author"] = ("sonnet", "medium")
+    _profile["acceptance-test-author"] = ("claude-sonnet-5-5", "medium")
 
 BASE_MANAGED_FILES = (
     Path(".claude/agents/acceptance-test-author.md"),
@@ -406,7 +408,7 @@ def parse_override(values: list[str], option: str, *, effort: bool = False) -> d
             raise InstallError(f"unknown role for {option}: {role}")
         if effort:
             allowed = CLAUDE_OWNER_EFFORTS if role == "owner" else CLAUDE_EFFORTS
-            result[role] = validate_effort(selected, option, allowed)
+            result[role] = validate_effort(selected, option, allowed) if selected else ""
         else:
             result[role] = validate_claude_model(selected, option)
     return result
@@ -516,28 +518,62 @@ def routing_for(args: argparse.Namespace, saved: dict[str, Any] | None = None) -
         model, effort = routing[role]
         routing[role] = (models.get(role, model), efforts.get(role, effort))
         validate_claude_model(routing[role][0], f"{role} model")
-        validate_effort(routing[role][1], f"{role} effort", CLAUDE_OWNER_EFFORTS if role == "owner" else CLAUDE_EFFORTS)
+        validate_model_effort(routing[role][0], routing[role][1], f"{role} effort", chief=role == "owner")
     return routing
 
 
+def check_model_cli_versions(models) -> None:
+    selected = set(models) & set(model_capabilities.MINIMUM_VERSIONS)
+    if not selected:
+        return
+    executable = shutil.which('claude')
+    if not executable:
+        raise InstallError('Claude CLI version cannot be verified for pinned models; install a supported CLI or explicitly choose an alias with default effort.')
+    try:
+        result = subprocess.run([executable, '--version'], stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=10, check=False)
+        match = re.search(r'(?<![0-9])(\d+)\.(\d+)\.(\d+)(?![0-9])', (result.stdout + result.stderr)[:4096])
+        version = tuple(map(int, match.groups())) if result.returncode == 0 and match else None
+        for model in selected:
+            model_capabilities.validate_cli_version(model, version)
+    except (OSError, subprocess.TimeoutExpired, ValueError) as error:
+        raise InstallError(str(error)) from error
+
+
+def validate_model_effort(model: str, effort: str, option: str, *, chief: bool = False) -> str:
+    try:
+        return model_capabilities.validate_selection(model, effort, chief=chief)
+    except ValueError as error:
+        raise InstallError(f"{option}: {error}") from error
+
+
 def render_agent(source: Path, model: str, effort: str) -> str:
+    validate_model_effort(model, effort, "agent effort")
     text = source.read_text(encoding="utf-8")
     lines = text.splitlines(keepends=True)
-    for index, line in enumerate(lines):
+    model_index, effort_index = None, None
+    for index, line in enumerate(lines[1:], 1):
+        if line.strip() == '---':
+            break
         if line.startswith("model:"):
+            model_index = index
             lines[index] = f"model: {model}\n"
         elif line.startswith("effort:"):
-            lines[index] = f"effort: {effort}\n"
+            effort_index = index
+            lines[index] = f"effort: {effort}\n" if effort else ""
+    if effort and effort_index is None:
+        if model_index is None:
+            raise InstallError('Agent frontmatter is missing model')
+        lines.insert(model_index + 1, f"effort: {effort}\n")
     return "".join(lines)
 
 
 def settings_content(routing: dict[str, tuple[str, str]]) -> str:
     model, effort = routing["owner"]
-    validate_effort(effort, "owner settings", CLAUDE_OWNER_EFFORTS)
+    validate_model_effort(model, effort, "owner settings", chief=True)
     return json.dumps(
         {
             "model": model,
-            "effortLevel": effort,
+            **({"effortLevel": effort} if effort else {}),
             "env": {"CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"},
         },
         indent=2,
@@ -847,9 +883,9 @@ def install_claude_block(root: Path, target: Path, manifest: dict[str, Any], dry
             if not isinstance(slot.get("model"), str) or not isinstance(slot.get("effort"), str):
                 raise InstallError("invalid saved helper model or effort")
             validate_claude_model(slot["model"], slot_id)
-            validate_effort(slot["effort"], slot_id, CLAUDE_EFFORTS)
+            validate_model_effort(slot["model"], slot["effort"], slot_id)
             label = " — " + json.dumps(slot["label"], ensure_ascii=False) if slot["label"] else ""
-            lines.append(f"- `orchestra-{slot_id}`: {slot['role']}{label}; model `{slot['model']}`, effort `{slot['effort']}`")
+            lines.append(f"- `orchestra-{slot_id}`: {slot['role']}{label}; model `{slot['model']}`, effort `{slot['effort'] or 'default'}`")
         block = block.replace(END_MARKER, "\n".join(lines) + "\n" + END_MARKER)
     existing = destination.read_text(encoding="utf-8") if destination.exists() else ""
     cleaned, had_block = remove_managed_block(existing)
@@ -1262,6 +1298,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.preset not in PRESETS and args.preset != "custom":
                     raise InstallError("saved profile is invalid; review it before updating")
             routing = routing_for(args, saved_routing)
+            check_model_cli_versions(pair[0] for pair in routing.values())
             if saved_routing is not None and (args.role_model or args.role_effort):
                 args.preset = "custom"
             if requested_provider not in (None, "none"):

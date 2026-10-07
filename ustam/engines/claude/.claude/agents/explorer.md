@@ -3,7 +3,7 @@ name: explorer
 description: Maps code paths, ownership boundaries, tests, and constraints before implementation.
 tools: Read, Glob, Grep
 disallowedTools: Edit, Write, Bash, Agent
-model: sonnet
+model: claude-sonnet-5-5
 effort: medium
 ---
 

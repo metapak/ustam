@@ -18,7 +18,7 @@ MAX_RESPONSE = 16 * 1024 * 1024
 BASE = Path(__file__).resolve().parent
 sys.dont_write_bytecode = True
 PROVIDERS = ('codex', 'claude', 'opencode', 'antigravity')
-METHODS = {'inspect', 'preview', 'apply', 'restore', 'usage', 'models'}
+METHODS = {'inspect', 'preview', 'apply', 'restore', 'usage', 'models', 'validate_team'}
 
 def verify_engine(provider):
     manifest = json.loads((BASE / 'engine-manifest.json').read_text())
@@ -118,9 +118,9 @@ class Engine:
             catalog['provider'] = 'opencode'
             return catalog
         # Claude backend validates aliases/IDs syntactically; it exposes no entitlement discovery.
-        return {'provider': 'claude', 'status': 'unverified', 'source': 'backend preset aliases',
-                'models': [{'id': value, 'efforts': sorted(self.installer.CLAUDE_EFFORTS), 'origin': 'backend_alias'} for value in ('opus', 'sonnet', 'haiku')],
-                'limitations': ['Claude backend does not expose account model discovery. Aliases are backend accepted; access and runtime resolution are unverified.', 'Chief effort max is unsupported.']}
+        return {'provider': 'claude', 'status': 'unverified', 'source': 'documented pinned models and unresolved native aliases',
+                'models': [self.installer.model_capabilities.capabilities(value) for value in self.installer.model_capabilities.CATALOG_MODELS],
+                'limitations': ['Claude account access is unverified. Explicit effort requires a documented pinned model; unresolved aliases and unsupported models use default effort with no native effort field.', 'Chief effort max is unsupported.']}
 
     def models(self):
         catalog = self.catalog()
@@ -171,6 +171,8 @@ class Engine:
         if 'task_type' in payload and (not isinstance(payload['task_type'], str) or len(payload['task_type']) > 100):
             raise ValueError('Invalid task type description')
         chief, helpers = payload.get('chief'), payload.get('helpers')
+        if self.provider == 'claude':
+            self.validate_team({'chief': chief, 'helpers': helpers})
         if not isinstance(chief, dict) or set(chief) != {'model', 'effort'} or not all(isinstance(v, str) for v in chief.values()):
             raise ValueError('Chief model and effort required')
         if not isinstance(helpers, list) or not 1 <= len(helpers) <= 50:
@@ -206,7 +208,21 @@ class Engine:
                 'replace': payload.get('replace') is True, 'allow_mixed': payload.get('allow_mixed') is True,
                 'revision': self.module.team_revision(self.target)}
 
+    def validate_team(self, params):
+        if self.provider != 'claude':
+            raise ValueError('Pure team validation is only exposed for Claude')
+        if not isinstance(params, dict) or set(params) != {'chief', 'helpers'} or not isinstance(params['chief'], dict) or not isinstance(params['helpers'], list):
+            raise ValueError('Claude chief and helpers are required')
+        for index, choice in enumerate([params['chief'], *params['helpers']]):
+            if not isinstance(choice, dict) or not isinstance(choice.get('model'), str) or not isinstance(choice.get('effort'), str):
+                raise ValueError('Claude model and effort must be text')
+            self.installer.validate_claude_model(choice['model'], 'model')
+            self.installer.validate_model_effort(choice['model'], choice['effort'], 'chief' if index == 0 else 'helper', chief=index == 0)
+        return {'provider': 'claude', 'valid': True}
+
     def call(self, method, target, params):
+        if method == 'validate_team':
+            return self.validate_team(params)
         self.select(target)
         if self.provider == 'antigravity':
             return self.backend.call(method, params)

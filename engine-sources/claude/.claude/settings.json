@@ -1,0 +1,7 @@
+{
+  "model": "claude-opus-5-5",
+  "effortLevel": "xhigh",
+  "env": {
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
+  }
+}

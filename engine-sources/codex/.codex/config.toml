@@ -1,0 +1,67 @@
+# managed-by: codex-bounded-orchestrator
+# Default profile: Astra coordinates; Luna explores, Sol implements and verifies, Astra reviews.
+# Explicit role registration is intentional: it is more reliable across
+# Codex surfaces than relying only on directory auto-discovery.
+
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
+review_model = "gpt-6-astra"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 4
+max_depth = 1
+default_subagent_model = "gpt-6-luna"
+default_subagent_reasoning_effort = "high"
+interrupt_message = true
+
+[agents.fast_lookup]
+description = "Optional fast path for exact, mechanical, read-only lookups with no architectural judgment."
+config_file = "./agents/fast-lookup.toml"
+nickname_candidates = ["Swift", "Needle"]
+
+[agents.explorer]
+description = "Repository explorer for mapping real code paths, ownership boundaries, tests, and constraints before implementation."
+config_file = "./agents/explorer.toml"
+nickname_candidates = ["Atlas", "Scout"]
+
+[agents.researcher]
+description = "Technical researcher for current, version-specific, or external facts that must be verified before implementation."
+config_file = "./agents/researcher.toml"
+nickname_candidates = ["Sagan", "Turing"]
+
+[agents.implementer]
+description = "Single-writer implementation agent for one explicitly owned scope after the owner fixes direction and acceptance criteria."
+config_file = "./agents/implementer.toml"
+nickname_candidates = ["Forge", "Builder"]
+
+[agents.verifier]
+description = "Independent verifier that runs focused checks and classifies failures without repairing production code."
+config_file = "./agents/verifier.toml"
+nickname_candidates = ["Gauge", "Proof"]
+
+[agents.failure_analyst]
+description = "Read-only root-cause analyst for a concrete blocker after exploration or verification has produced evidence."
+config_file = "./agents/failure-analyst.toml"
+nickname_candidates = ["Trace", "Root"]
+
+[agents.qa_operator]
+description = "Optional runtime QA operator for browser, device, or computer-use flows that require direct observation and evidence."
+config_file = "./agents/qa-operator.toml"
+nickname_candidates = ["Probe", "Lens"]
+
+[agents.reviewer]
+description = "Independent read-only reviewer for one frozen candidate; returns evidence-backed findings only."
+config_file = "./agents/reviewer.toml"
+nickname_candidates = ["Aegis", "Sentinel"]
+
+[agents.advisor]
+description = "Optional read-only advisor for one high-risk architecture, security, or data-integrity decision owned by the root."
+config_file = "./agents/advisor.toml"
+nickname_candidates = ["Oracle", "Keystone"]
+
+[agents.acceptance_test_author]
+description = "Authors acceptance packs before production implementation; never repairs production code."
+config_file = "./agents/acceptance-test-author.toml"

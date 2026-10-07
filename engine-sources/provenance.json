@@ -1,0 +1,614 @@
+{
+  "engines": {
+    "antigravity": {
+      "files": {
+        "LICENSE": {
+          "git_mode": "100644",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        "NOTICE": {
+          "git_mode": "100644",
+          "sha256": "346a6b91dc15e79a09702e7adb693456fd150bfeaf8c4409d88ad059980a4dcf"
+        },
+        "VERSION": {
+          "git_mode": "100644",
+          "sha256": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67"
+        },
+        "scripts/console_settings.py": {
+          "git_mode": "100644",
+          "sha256": "b015d368c4f320bd273937f497a168230b4b95bdcaa0a6362e01ee9eb552ee75"
+        },
+        "scripts/install.py": {
+          "git_mode": "100644",
+          "sha256": "d2b030ee2d4d97e313ad6468544cb94b3042a58cb7ec02c38f867642a74acda2"
+        }
+      },
+      "origin_commit": "80613c6c7c11d2a3398b3499a402f328575f0fe0",
+      "origin_repository": "https://github.com/metapak/ustam-codex-orchestrator",
+      "origin_source_prefix": "engine-sources/antigravity",
+      "source_prefix": "engine-sources/antigravity"
+    },
+    "claude": {
+      "files": {
+        ".claude/.bounded-orchestrator/.gitignore": {
+          "git_mode": "100644",
+          "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+        },
+        ".claude/agents/acceptance-test-author.md": {
+          "git_mode": "100644",
+          "sha256": "bc91d4ae3bcb48d57489f857de56698378dc67d2bc7ea75aee717d375bb96771"
+        },
+        ".claude/agents/advisor.md": {
+          "git_mode": "100644",
+          "sha256": "1447443a56686a7ec20aa87bd6b58c51220839d3a64568ee11a3d701524ab2b2"
+        },
+        ".claude/agents/explorer.md": {
+          "git_mode": "100644",
+          "sha256": "46a0ee430a798dc3dd115347f46b20451a62b7cc6cfe2eba4c5554198e92879b"
+        },
+        ".claude/agents/failure-analyst.md": {
+          "git_mode": "100644",
+          "sha256": "ac120881684e0d7055a712e99cebe8ba5cbd368f58895b349a0a5b28e49d1ad5"
+        },
+        ".claude/agents/implementer.md": {
+          "git_mode": "100644",
+          "sha256": "4832c3f8889dab2962b6dbccec6e2c3f7348fc3981777129fa9539bae0c67f24"
+        },
+        ".claude/agents/qa-operator.md": {
+          "git_mode": "100644",
+          "sha256": "f608977b4d0a662057b72017b9b591b112c334d965f81bd51bfffc5a7de4eaff"
+        },
+        ".claude/agents/researcher.md": {
+          "git_mode": "100644",
+          "sha256": "063ab0752a26774b42db91e4b046e152d66df260ae97b48cbdbab2e55cff7b6b"
+        },
+        ".claude/agents/reviewer.md": {
+          "git_mode": "100644",
+          "sha256": "a820b77514e7e6c79ffd53e8ef0025fe70c06fda66069241033fdb3d3bd2f9fc"
+        },
+        ".claude/agents/verifier.md": {
+          "git_mode": "100644",
+          "sha256": "4bb2b4469c7e7bed30c7c012a89150f3293ecf6d9182982d1aa6c9e529ea4aaf"
+        },
+        ".claude/bounded-orchestrator.eval.example.json": {
+          "git_mode": "100644",
+          "sha256": "38e06bf72a576829d544eb1264e8790738c0e9bb9c17890ec2e14b75609b2207"
+        },
+        ".claude/settings.json": {
+          "git_mode": "100644",
+          "sha256": "86c198da36af7b79334b24d6f2fd64c5866f7c362fcf4cb38b49c089a0b4592d"
+        },
+        ".claude/skills/secure-change/SKILL.md": {
+          "git_mode": "100644",
+          "sha256": "867bf14f9540842ef85004928e80a8576b3157fdc4fb58e4a71c1032ad096b6f"
+        },
+        ".claude/skills/ui-design/SKILL.md": {
+          "git_mode": "100644",
+          "sha256": "51c0427cc1d1377d3d61897d2ef5538b96dac59899a2d18a66c1f80c0387dcc1"
+        },
+        ".claude/tools/console/app.js": {
+          "git_mode": "100644",
+          "sha256": "fdafa5b6066c641821fba797098581d44384824f43e3747a04544a60b31dbb09"
+        },
+        ".claude/tools/console/index.html": {
+          "git_mode": "100644",
+          "sha256": "08caf4ab990fef42b61c1f18e9bdee8662628ecc325f9fd9731a3662b885f0df"
+        },
+        ".claude/tools/console/orchestra.svg": {
+          "git_mode": "100644",
+          "sha256": "93a713f5de47f227e599f615c9c5b9df51b35e0a1c7ccdab1bb9ad132b2070e3"
+        },
+        ".claude/tools/console/style.css": {
+          "git_mode": "100644",
+          "sha256": "4f8d0991b52abc2c36471b8e2f8448eb7bc0ad993722b1b301dfb1fd8073eb36"
+        },
+        ".claude/tools/console_settings.py": {
+          "git_mode": "100644",
+          "sha256": "75e8e5c1e5d9cab0d2cd8a6540d90915ca6951872ad69402acd52e3ca85a28ff"
+        },
+        ".claude/tools/deepseek_mcp.py": {
+          "git_mode": "100644",
+          "sha256": "91185b6da857123fb8dcd915c3fa3bde825e7cdc00abc58999c210b453d86ea2"
+        },
+        ".claude/tools/local_eval.py": {
+          "git_mode": "100755",
+          "sha256": "dc21d0405b176f880aa3b3b29dfc743f5d79c5ece2274708b14f65d875513bbc"
+        },
+        ".claude/tools/openai_mcp.py": {
+          "git_mode": "100644",
+          "sha256": "746f640a2fd5be5c3032eff45e937296881f059ce8b14607dd35faff5f57945c"
+        },
+        ".claude/tools/task_ledger.py": {
+          "git_mode": "100755",
+          "sha256": "00a1769f1a1e018b2676b8f6bb6dec6c833bd8c943cd3741ff5a491c6a0959e9"
+        },
+        ".claude/tools/usage_report.py": {
+          "git_mode": "100755",
+          "sha256": "1949e3794a93282d1e95bb119b54d3ae6c8b5f103763490039e34aa02af6bc49"
+        },
+        ".claude/tools/work_protocol": {
+          "git_mode": "100644",
+          "sha256": "62980312723e940154bf044f09003a4de42eb27db029013a817bdd9b45667d1a"
+        },
+        ".claude/tools/work_protocol.py": {
+          "git_mode": "100644",
+          "sha256": "a3d48afd8ed4829f72e2f3a4b9075d1408da47297e9d14a0f1786b3153047710"
+        },
+        ".claude/tools/work_protocol_core.py": {
+          "git_mode": "100644",
+          "sha256": "92cf89f3d5c83ef14a11c0e93973aa0e37296626d84dd9e9e82724257d8c8645"
+        },
+        "LICENSE": {
+          "git_mode": "100644",
+          "sha256": "3c02d94d8de15d1c80e836b1daf9f4c4a1b9bf8124bddf0ab480849c5002154c"
+        },
+        "NOTICE": {
+          "git_mode": "100644",
+          "sha256": "8cec60d45e196dcf8e27e8c0254fb73421769ac9166610837fe6fcbcb82ddeb6"
+        },
+        "VERSION": {
+          "git_mode": "100644",
+          "sha256": "a0ad50640139a524f86591157145bf1d4674ea9c065bfea21558f0f7b04430c8"
+        },
+        "scripts/build_release.py": {
+          "git_mode": "100755",
+          "sha256": "fcce6fc0b261b308cb8f8b60c35a22514db54237b7292a0d67699bd54c88ac50"
+        },
+        "scripts/build_ustam_app.py": {
+          "git_mode": "100644",
+          "sha256": "82428747254c31c28e7d218365b8c18b3ce52d551a88974c8e8874e136ce438d"
+        },
+        "scripts/build_ustam_engines.py": {
+          "git_mode": "100644",
+          "sha256": "e788ff921b4c3f331c1baa0f5e558c3ab71d52d240e122f6182b40c0bbe29634"
+        },
+        "scripts/configure.py": {
+          "git_mode": "100644",
+          "sha256": "1eb80fbd0907880789097f031ca37e91874ead43e30b18f2c04d4bd844468514"
+        },
+        "scripts/install.ps1": {
+          "git_mode": "100644",
+          "sha256": "4efade951d0c063643942dfb7912e230b39c498b5f76c609258cbbc41b98ff4f"
+        },
+        "scripts/install.py": {
+          "git_mode": "100755",
+          "sha256": "55403e462ed2960b672d287446715cb4496760df028c8efeafe3cb5139948f75"
+        },
+        "scripts/install.sh": {
+          "git_mode": "100755",
+          "sha256": "d4507dea40f349c56c9c51204314829cca39f1e7986ab137a0ed9366b7a03dd4"
+        },
+        "scripts/install_ustam_macos.py": {
+          "git_mode": "100644",
+          "sha256": "10957005fc2bd677d45cedd75f20e8d2a13d96e271ef95c61492fe2a417f77b7"
+        },
+        "scripts/model_capabilities.py": {
+          "git_mode": "100644",
+          "sha256": "ce83ceef55d018dc81a5ceec72899cbf105755aff8a3da959c7446c9d9b6d185"
+        },
+        "scripts/sync_ustam_distribution.py": {
+          "git_mode": "100644",
+          "sha256": "88b1def761f7ab3c0783713e8a6448275de8a3d91bd616a8eb36014905598e3d"
+        },
+        "scripts/validate.py": {
+          "git_mode": "100755",
+          "sha256": "89ee58b444c4fe61f1a09d574ff4b06e0e70f7cd3e2733f946415c98e7d1e7af"
+        },
+        "templates/CLAUDE.block.md": {
+          "git_mode": "100644",
+          "sha256": "f1a0ef00417e2052fa6c9cf8ecc632963a4027661e1c6dd16f2a0e2db7c9ee13"
+        }
+      },
+      "origin_commit": "b722391acb1d183cb3375a5699fcaf70b209bdbf",
+      "origin_repository": "https://github.com/metapak/ustam-claude-orchestrator",
+      "origin_source_prefix": "",
+      "source_prefix": "engine-sources/claude"
+    },
+    "codex": {
+      "files": {
+        ".agents/skills/bounded-orchestrator-security-review/SKILL.md": {
+          "git_mode": "100644",
+          "sha256": "0c66ee5160b05d33d64857e4cf9e4a0e149938706fb8cd6e95f8bb08d1e48d8b"
+        },
+        ".agents/skills/bounded-orchestrator-ui-design/SKILL.md": {
+          "git_mode": "100644",
+          "sha256": "7dfc170ca65ccbba4d477903232d14533842ceaf0b941d516dec7abbd24c3441"
+        },
+        ".agents/skills/bounded-orchestrator/SKILL.md": {
+          "git_mode": "100644",
+          "sha256": "4f83eb9049f0a0646db1dc6ee311cd2a84e985869e90c85a40c6b239a4826c14"
+        },
+        ".agents/skills/bounded-orchestrator/references/escalation.md": {
+          "git_mode": "100644",
+          "sha256": "53379ae19247ba2d49de28b923a70e687dcfe8b0cb17d21b79564f70670ce388"
+        },
+        ".agents/skills/bounded-orchestrator/references/review-protocol.md": {
+          "git_mode": "100644",
+          "sha256": "326a6522e770d20141c91a47f9857e452fa2397908ef968c2cfcc6c7cc99c9bf"
+        },
+        ".agents/skills/bounded-orchestrator/references/task-contract.md": {
+          "git_mode": "100644",
+          "sha256": "597e5f5c30682f63b2c63f93bb573101e28fd495a0b7751c1f5b1dd004f0ebbd"
+        },
+        ".codex/.bounded-orchestrator/.gitignore": {
+          "git_mode": "100644",
+          "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+        },
+        ".codex/.candidate/.gitignore": {
+          "git_mode": "100644",
+          "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+        },
+        ".codex/agents/acceptance-test-author.toml": {
+          "git_mode": "100644",
+          "sha256": "e87a64e18aae979796a90b783aa1817f78932fa3793404eab58d1d3e868c8eb0"
+        },
+        ".codex/agents/advisor.toml": {
+          "git_mode": "100644",
+          "sha256": "dd489b5b22b534053a5cfa332a955d407e7fa81820a6d1df6d462722d586827d"
+        },
+        ".codex/agents/explorer.toml": {
+          "git_mode": "100644",
+          "sha256": "d56436dd02f87a16b15d767e0df9ca38dfa1350422a4154a6f3b0abfe471cade"
+        },
+        ".codex/agents/failure-analyst.toml": {
+          "git_mode": "100644",
+          "sha256": "5f18120be1f03f73b9ca83b64f00890fe16455eea0350cb1f2cbb69d0ef83a2c"
+        },
+        ".codex/agents/fast-lookup.toml": {
+          "git_mode": "100644",
+          "sha256": "a57e7b943d251292b9bc75cd92b509c256f96a8ed9513929f5770d1f5e15b8ca"
+        },
+        ".codex/agents/implementer.toml": {
+          "git_mode": "100644",
+          "sha256": "4c0c39471daa4b9e08db8e2f3add8b32547a3220e268872fa964c33d41832ad0"
+        },
+        ".codex/agents/qa-operator.toml": {
+          "git_mode": "100644",
+          "sha256": "03547f87f953af2f3fdd897804406233ad22ab8046b37a633e87e16698453078"
+        },
+        ".codex/agents/researcher.toml": {
+          "git_mode": "100644",
+          "sha256": "11f76fb238b893721702eb96b566f5b8371b9940c03b916488ad27d2b36bbc84"
+        },
+        ".codex/agents/reviewer.toml": {
+          "git_mode": "100644",
+          "sha256": "56b14a9f67d29d2d5615faedcbeeef53d8ff46f56a55eb7aa383437ed30516e4"
+        },
+        ".codex/agents/verifier.toml": {
+          "git_mode": "100644",
+          "sha256": "94d4f7c363c68d882ef5068b2d0599cbc6512e9771a0fa5e875d5e0c3db3bc74"
+        },
+        ".codex/bounded-orchestrator.eval.example.json": {
+          "git_mode": "100644",
+          "sha256": "38e06bf72a576829d544eb1264e8790738c0e9bb9c17890ec2e14b75609b2207"
+        },
+        ".codex/config.toml": {
+          "git_mode": "100644",
+          "sha256": "6070afaf2ed82e7dc3233af9e6e69358372b4358b0b4eafcda10a3287fc5d409"
+        },
+        ".codex/tools/anthropic_mcp.py": {
+          "git_mode": "100755",
+          "sha256": "171cd7036b693453ff5fa1b357f7fecd7e719e9a7fa0fa21e8e084da90d8ad53"
+        },
+        ".codex/tools/candidate.py": {
+          "git_mode": "100755",
+          "sha256": "34ba74e1d70137fe84dc1b8c8dcd68afd6c1834d7e0bb74f86a4478ba1f3ea18"
+        },
+        ".codex/tools/deepseek_mcp.py": {
+          "git_mode": "100755",
+          "sha256": "c7019d36d79388b5e362a0338a0c513a1878e8345b5ab20534bf4759f6596f04"
+        },
+        ".codex/tools/ledger.py": {
+          "git_mode": "100755",
+          "sha256": "d271176ea9e0e00ec78568d0e56fcfb7d1c579c66b54ba69af5d805890173bfb"
+        },
+        ".codex/tools/local_eval.py": {
+          "git_mode": "100755",
+          "sha256": "aedaad5172b746257c88afcf3ec797614e2a988a07b5fa55e440141aacdb9625"
+        },
+        ".codex/tools/usage_report.py": {
+          "git_mode": "100755",
+          "sha256": "6300b032a872af24f9cda764268ac0e50042f8e1175aa578438359a285809d78"
+        },
+        ".codex/tools/work_protocol": {
+          "git_mode": "100644",
+          "sha256": "62980312723e940154bf044f09003a4de42eb27db029013a817bdd9b45667d1a"
+        },
+        ".codex/tools/work_protocol.py": {
+          "git_mode": "100644",
+          "sha256": "a3d48afd8ed4829f72e2f3a4b9075d1408da47297e9d14a0f1786b3153047710"
+        },
+        ".codex/tools/work_protocol_core.py": {
+          "git_mode": "100644",
+          "sha256": "92cf89f3d5c83ef14a11c0e93973aa0e37296626d84dd9e9e82724257d8c8645"
+        },
+        "LICENSE": {
+          "git_mode": "100644",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        "NOTICE": {
+          "git_mode": "100644",
+          "sha256": "346a6b91dc15e79a09702e7adb693456fd150bfeaf8c4409d88ad059980a4dcf"
+        },
+        "VERSION": {
+          "git_mode": "100644",
+          "sha256": "97a5d6e540a6120d09c39ddb667e0e8e2bac7fcc2ffef813b82e08fd60365bce"
+        },
+        "presets/sol-owner.config.toml": {
+          "git_mode": "100644",
+          "sha256": "7ac71f5339d819ec9089358362667dac303ae00dd1072a8da9dcfcb39b478aa7"
+        },
+        "scripts/build_release.py": {
+          "git_mode": "100755",
+          "sha256": "e8f5f8d5fbb119644fbdfd3ebd463143f3677869dade5243e18d789a13f8f9ec"
+        },
+        "scripts/build_ustam_app.py": {
+          "git_mode": "100644",
+          "sha256": "82428747254c31c28e7d218365b8c18b3ce52d551a88974c8e8874e136ce438d"
+        },
+        "scripts/build_ustam_engines.py": {
+          "git_mode": "100644",
+          "sha256": "a62d9a38c02771b28e8b9fa6b4e6892364f2c7f3707357be276afcc5854f221a"
+        },
+        "scripts/console/app.js": {
+          "git_mode": "100644",
+          "sha256": "eec25a5a68e22483ff7afe360516bc2d623217402138d38351814e6e594c09f8"
+        },
+        "scripts/console/index.html": {
+          "git_mode": "100644",
+          "sha256": "8ebd63f9db51aa08a13b405e81b06eabed77a88635859724fef12f1d92216957"
+        },
+        "scripts/console/orchestra.svg": {
+          "git_mode": "100644",
+          "sha256": "93a713f5de47f227e599f615c9c5b9df51b35e0a1c7ccdab1bb9ad132b2070e3"
+        },
+        "scripts/console/style.css": {
+          "git_mode": "100644",
+          "sha256": "0dcf7d6cab61e3b054e8cca788c09706bbacbc9b33244c5c17fc87d752b4aaef"
+        },
+        "scripts/dashboard.py": {
+          "git_mode": "100644",
+          "sha256": "e866af06c216b90a54cb50939acb1618fb6b0b2e4860ac86be33e5d72f9c7e9d"
+        },
+        "scripts/install.ps1": {
+          "git_mode": "100644",
+          "sha256": "60357a7685c69d079c1ec5737dc1ee2c29610f41c4af2eaad05ce0d78345f337"
+        },
+        "scripts/install.py": {
+          "git_mode": "100755",
+          "sha256": "10016f328211eadb50487ae63a9cbb82e548522583cc4817a5c038cd2bf46833"
+        },
+        "scripts/install.sh": {
+          "git_mode": "100755",
+          "sha256": "010bdb35819318563d3cc46a1a73066d4a86c9e427cb0c12c46da264c076d160"
+        },
+        "scripts/install_ustam_macos.py": {
+          "git_mode": "100644",
+          "sha256": "10957005fc2bd677d45cedd75f20e8d2a13d96e271ef95c61492fe2a417f77b7"
+        },
+        "scripts/model_catalog.json": {
+          "git_mode": "100644",
+          "sha256": "37b53ced9bc4ad6019f7a4728b1845ea82b72320e9b5c8024ae76544f43fc5fd"
+        },
+        "scripts/model_catalog.py": {
+          "git_mode": "100644",
+          "sha256": "d6b3eaa6af9a614d622d7ef5fe68177e515d7c70de1f5cce394f6f7db85e8657"
+        },
+        "scripts/sync_ustam_distribution.py": {
+          "git_mode": "100644",
+          "sha256": "88b1def761f7ab3c0783713e8a6448275de8a3d91bd616a8eb36014905598e3d"
+        },
+        "scripts/validate.py": {
+          "git_mode": "100755",
+          "sha256": "2beb09684de4afc5d878d130ee9dee992fd8d53d1883a964226ff2d0398af00d"
+        },
+        "templates/AGENTS.block.md": {
+          "git_mode": "100644",
+          "sha256": "890bdeb0ecfe1d96015d6c3dd55fc8df6764a4866eee8dedeb20a7372d2e7ded"
+        }
+      },
+      "origin_commit": "46ca3064b7665ebe683b77b496fe5d1fe218bdbc",
+      "origin_repository": "https://github.com/metapak/ustam-codex-orchestrator",
+      "origin_source_prefix": "",
+      "source_prefix": "engine-sources/codex"
+    },
+    "opencode": {
+      "files": {
+        ".opencode/.bounded-orchestrator/.gitignore": {
+          "git_mode": "100644",
+          "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+        },
+        ".opencode/.candidate/.gitignore": {
+          "git_mode": "100644",
+          "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d"
+        },
+        ".opencode/agents/acceptance-test-author.md": {
+          "git_mode": "100644",
+          "sha256": "d20a841d216b9588552cd5c8d5bc3b37e084893831e7ccce8c33c6829783a2be"
+        },
+        ".opencode/agents/advisor.md": {
+          "git_mode": "100644",
+          "sha256": "6605001841f3f3a6c6bee5e6af418432c9d56a9cff3fd54b2db1004dd4afeb54"
+        },
+        ".opencode/agents/explorer.md": {
+          "git_mode": "100644",
+          "sha256": "e7513e6c628bfe58bb07470e1a08b243d54fd0441f71fae014a32b845c3a034d"
+        },
+        ".opencode/agents/failure-analyst.md": {
+          "git_mode": "100644",
+          "sha256": "d894ba598356cb0121b363e1c1e24269bf153618bf8118ef42ce14930e7b4987"
+        },
+        ".opencode/agents/fast-lookup.md": {
+          "git_mode": "100644",
+          "sha256": "d097c8b1568e27af3122c1d9872044c273ad959faf9cf959273d06e0c1e52f37"
+        },
+        ".opencode/agents/implementer.md": {
+          "git_mode": "100644",
+          "sha256": "1bae5a97da21b90f3d18679c2c44ae587056a0712d94f799945bc3090129b1cf"
+        },
+        ".opencode/agents/owner.md": {
+          "git_mode": "100644",
+          "sha256": "ee1d531e1a4cc399e0f86e74fe10e0c302e48e148d0c60900e6f50c3efb079c2"
+        },
+        ".opencode/agents/qa-operator.md": {
+          "git_mode": "100644",
+          "sha256": "e4559887f362ad6e2afe1dbf50fe41ceb4ee3280fb582979c493836c4facb7e7"
+        },
+        ".opencode/agents/researcher.md": {
+          "git_mode": "100644",
+          "sha256": "963de85c0931ca6878da0278b57e824c025fde9dbf285fc9b83826e7b0efa8bd"
+        },
+        ".opencode/agents/reviewer.md": {
+          "git_mode": "100644",
+          "sha256": "66052b010953368b9132fc5b1bb94b95d6b0bd59743abbe0dd4ceea8a9c7c6da"
+        },
+        ".opencode/agents/verifier.md": {
+          "git_mode": "100644",
+          "sha256": "e347de9d9965ea995a6ad5643cb83e407141603fdf17a71e04ee42d3dbcc8808"
+        },
+        ".opencode/bounded-orchestrator.eval.example.json": {
+          "git_mode": "100644",
+          "sha256": "4ad5498fc05dbf929d020b40cf925a86c6f71ac86bc9058df05f3e2e7d85a5d7"
+        },
+        ".opencode/opencode.jsonc": {
+          "git_mode": "100644",
+          "sha256": "bca343e4319178f2701dd376ee94afd1a35cb6356904c945f6bd162b17b10279"
+        },
+        ".opencode/skills/bounded-orchestrator/SKILL.md": {
+          "git_mode": "100644",
+          "sha256": "4c67463db6d4cabc3a92aa81bf3c48f9ed9303041474ab40bea63cf4b6e0e875"
+        },
+        ".opencode/skills/bounded-orchestrator/references/escalation.md": {
+          "git_mode": "100644",
+          "sha256": "ddd40420a69fbcdfb0d2401d149a35c4c0466eac7f70f8a4a69e06ac2cfb2754"
+        },
+        ".opencode/skills/bounded-orchestrator/references/review-protocol.md": {
+          "git_mode": "100644",
+          "sha256": "a2c1e4d4335b47a2f25add7b31b131a8da7290c351b4adf1546a2979ae6d1018"
+        },
+        ".opencode/skills/bounded-orchestrator/references/task-contract.md": {
+          "git_mode": "100644",
+          "sha256": "eda07267e4e273a8e41d691482d566d6e1d8248dc2110a526f2c6b0d39ddf464"
+        },
+        ".opencode/tools/candidate.py": {
+          "git_mode": "100755",
+          "sha256": "fb463745ae0165c22cee71145854315c530713f23c084e3a0aeb1109972652a2"
+        },
+        ".opencode/tools/console.css": {
+          "git_mode": "100644",
+          "sha256": "75af5af18fb1ed5251d0438908359980183e49838bad5b15894edd3a25826e72"
+        },
+        ".opencode/tools/console.html": {
+          "git_mode": "100644",
+          "sha256": "e46b1793ce24544f85c994679edddcd17036db2c3d1c12e1b64234f9433b727e"
+        },
+        ".opencode/tools/console.js": {
+          "git_mode": "100644",
+          "sha256": "097e6605d14fbc7e0a54a71763c66148ba1732c60fd3d1e6a544ff050a2716fc"
+        },
+        ".opencode/tools/console.py": {
+          "git_mode": "100644",
+          "sha256": "9b3211a30bdcb186815b0a4f445de4c5502b5c571f5b6acf7f77bc07f9fcd2a3"
+        },
+        ".opencode/tools/ledger.py": {
+          "git_mode": "100755",
+          "sha256": "e6871edd6d280e2e4d3a1c719eddf7a61d50367226e7defe619e260d1a8f5163"
+        },
+        ".opencode/tools/local_eval.py": {
+          "git_mode": "100755",
+          "sha256": "6843662f0a103569f3dc7e99e0a0d9b6c271cadf4b0a2b646ac19b3171e1f11f"
+        },
+        ".opencode/tools/orchestra-actors.svg": {
+          "git_mode": "100644",
+          "sha256": "93a713f5de47f227e599f615c9c5b9df51b35e0a1c7ccdab1bb9ad132b2070e3"
+        },
+        ".opencode/tools/team_editor.py": {
+          "git_mode": "100644",
+          "sha256": "8799f9abbcf94e82ad01a5954946b37fb101e615286664c1299f17bf748ce65b"
+        },
+        ".opencode/tools/usage_report.py": {
+          "git_mode": "100755",
+          "sha256": "c788fcc4056d0914f47300568d36a6966eac60b67c37bbab46d6bb63b58a2205"
+        },
+        ".opencode/tools/work_protocol": {
+          "git_mode": "100644",
+          "sha256": "62980312723e940154bf044f09003a4de42eb27db029013a817bdd9b45667d1a"
+        },
+        ".opencode/tools/work_protocol.py": {
+          "git_mode": "100644",
+          "sha256": "a3d48afd8ed4829f72e2f3a4b9075d1408da47297e9d14a0f1786b3153047710"
+        },
+        ".opencode/tools/work_protocol_core.py": {
+          "git_mode": "100644",
+          "sha256": "92cf89f3d5c83ef14a11c0e93973aa0e37296626d84dd9e9e82724257d8c8645"
+        },
+        "LICENSE": {
+          "git_mode": "100644",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        "NOTICE": {
+          "git_mode": "100644",
+          "sha256": "9dc0eabfabba32017fcf456a9ab7d2fe55189d20ff251a2ea91005df7054b7b5"
+        },
+        "VERSION": {
+          "git_mode": "100644",
+          "sha256": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67"
+        },
+        "scripts/build_release.py": {
+          "git_mode": "100755",
+          "sha256": "e35381cee66b3f1c5879ce3d7af43894f00d61a5df97b87f2abe62117ca917af"
+        },
+        "scripts/build_ustam_app.py": {
+          "git_mode": "100644",
+          "sha256": "82428747254c31c28e7d218365b8c18b3ce52d551a88974c8e8874e136ce438d"
+        },
+        "scripts/build_ustam_engines.py": {
+          "git_mode": "100644",
+          "sha256": "e788ff921b4c3f331c1baa0f5e558c3ab71d52d240e122f6182b40c0bbe29634"
+        },
+        "scripts/dashboard.py": {
+          "git_mode": "100644",
+          "sha256": "46552d2d04da98b7f63f7ec94b5a5243808bb4958e638116e66a1f7fdb353cc9"
+        },
+        "scripts/install.ps1": {
+          "git_mode": "100644",
+          "sha256": "8bba2c818fb026bcea62a0cbf3b7466d6851f0440692db0f04da355f049d416c"
+        },
+        "scripts/install.py": {
+          "git_mode": "100755",
+          "sha256": "b2bc150ecdd9c458d3a5c9ccf680d08f6383c819208395b5d28a5f48b337461f"
+        },
+        "scripts/install.sh": {
+          "git_mode": "100755",
+          "sha256": "3238e5d24fc3b874befafb4b3518c92338419cb7092433d91f57999adc5c0376"
+        },
+        "scripts/install_ustam_macos.py": {
+          "git_mode": "100644",
+          "sha256": "10957005fc2bd677d45cedd75f20e8d2a13d96e271ef95c61492fe2a417f77b7"
+        },
+        "scripts/smoke_opencode.py": {
+          "git_mode": "100755",
+          "sha256": "dd517e6e337fa4d2e9af0522c8063c68b220f2171b9980b8a9fcd3afe8c55f35"
+        },
+        "scripts/sync_ustam_distribution.py": {
+          "git_mode": "100644",
+          "sha256": "88b1def761f7ab3c0783713e8a6448275de8a3d91bd616a8eb36014905598e3d"
+        },
+        "scripts/validate.py": {
+          "git_mode": "100755",
+          "sha256": "c0039e567ac70fb4ed301d4c31e0413af8de65d51d08e26c4bfdc75faa40714e"
+        },
+        "templates/AGENTS.block.md": {
+          "git_mode": "100644",
+          "sha256": "962c7db979fd2f77926ac0a530fab049327a5c29049429268fff45682d50d02f"
+        }
+      },
+      "origin_commit": "fa8068f6bc360b6c765570d87d4cf39ffa597f32",
+      "origin_repository": "https://github.com/metapak/ustam-opencode-orchestrator",
+      "origin_source_prefix": "",
+      "source_prefix": "engine-sources/opencode"
+    }
+  },
+  "schema": 1,
+  "source_repository": "https://github.com/metapak/ustam"
+}

@@ -1,0 +1,318 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "owner",
+  "agents": {
+    "owner": {
+      "description": "Strict coordinator for user conversation, planning, delegation, concise worker reports, and redelegation only.",
+      "mode": "primary",
+      "steps": 36,
+      "permissions": [
+        {
+          "action": "*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "fast-lookup",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "explorer",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "researcher",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "acceptance-test-author",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "implementer",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "verifier",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "failure-analyst",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "qa-operator",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "reviewer",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "advisor",
+          "effect": "allow"
+        },
+        {
+          "action": "skill",
+          "resource": "bounded-orchestrator",
+          "effect": "allow"
+        },
+        {
+          "action": "question",
+          "resource": "*",
+          "effect": "allow"
+        }
+      ]
+    },
+    "fast-lookup": {
+      "description": "Small exact read-only lookups.",
+      "mode": "subagent",
+      "steps": 10,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "explorer": {
+      "description": "Maps repository paths and constraints without editing.",
+      "mode": "subagent",
+      "steps": 22,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "researcher": {
+      "description": "Verifies current external or version-specific facts without editing.",
+      "mode": "subagent",
+      "steps": 22,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "implementer": {
+      "description": "Sole writer for one explicitly assigned scope.",
+      "mode": "subagent",
+      "steps": 34,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "verifier": {
+      "description": "Runs focused checks against a frozen candidate without editing.",
+      "mode": "subagent",
+      "steps": 20,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "git status*",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "git diff*",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "failure-analyst": {
+      "description": "Finds root causes after evidence-backed failures without editing.",
+      "mode": "subagent",
+      "steps": 22,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "qa-operator": {
+      "description": "Performs bounded runtime QA without editing source files.",
+      "mode": "subagent",
+      "steps": 20,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "git status*",
+          "effect": "allow"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "reviewer": {
+      "description": "Independently reviews the exact frozen candidate without editing.",
+      "mode": "subagent",
+      "steps": 22,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "advisor": {
+      "description": "Read-only advisor for one high-risk architecture or integrity decision.",
+      "mode": "subagent",
+      "steps": 24,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "acceptance-test-author": {
+      "description": "Authors acceptance packs before production implementation",
+      "mode": "subagent",
+      "steps": 34,
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    }
+  }
+}

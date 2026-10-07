@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ustam · Tercihler</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">U</span><span>Ustam <small>· Claude</small></span></div>
+    <div class="top-actions">
+      <span class="badge" data-i18n="localBadge">Bu bilgisayarda</span>
+      <div class="language" role="group" data-i18n-aria="languageChoice">
+        <button type="button" data-lang="tr" aria-pressed="true">Türkçe</button>
+        <button type="button" data-lang="en" aria-pressed="false">English</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="intro">
+      <p class="eyebrow" data-i18n="eyebrow">YEREL KONSOL</p>
+      <h1 data-i18n="welcome">Çalışma biçiminizi seçin.</h1>
+      <p data-i18n="intro">Tercihlerinizi kaydedin; kullanımınızı ve kayıtlı çalışmalarınızı istediğiniz zaman görün.</p>
+      <div class="project-details"><strong data-i18n="projectDetails">Seçili proje</strong><p id="target" class="path"></p><p class="field-help" data-i18n="projectHelp">Ayarlar bu projeye yazılır. Başka proje seçmek için başlatıcıyı yeniden açın.</p></div>
+    </div>
+    <nav data-i18n-aria="pagesLabel" aria-label="Sayfalar">
+      <button type="button" class="active" data-tab="settings" aria-current="page" data-i18n="tabSettings">Tercihler</button>
+      <button type="button" data-tab="usage" data-i18n="tabUsage">Kullanım</button>
+      <button type="button" data-tab="tasks" data-i18n="tabTasks">Çalışmalar</button>
+    </nav>
+    <div id="activity" class="activity" role="status" aria-live="polite"></div>
+    <section id="settings" aria-labelledby="settings-heading">
+      <div class="section-title">
+        <div><h2 id="settings-heading" data-i18n="settingsHeading">Nasıl çalışsın?</h2><p data-i18n="settingsIntro">Bir yaklaşım seçin; etkisini kaydetmeden önce görebilirsiniz.</p><p class="field-help" data-i18n="chiefPolicy">Şef kullanıcıyla konuşur, planlar ve işleri uzmanlara verir; dosya okuma, uygulama ve kontrolleri kendisi yapmaz.</p></div>
+      </div>
+      <div class="task-picker"><div class="task-picker-head"><div><h3 data-i18n="taskKind">İş türü</h3><p data-i18n="taskKindHelp">Bir iş seçin; çalışma yoğunluğu ve önerilen ekip taslakta hazırlanır. Kaydetmeden önce değiştirebilirsiniz.</p></div><button type="button" id="undo-task" class="secondary task-undo" data-i18n="undoDraft" hidden>↶ Taslağı geri al</button></div><div id="task-profiles" class="task-profiles" role="group" data-i18n-aria="taskKind"></div><p id="task-profile-note" class="field-help" aria-live="polite"></p></div>
+      <div class="team-console"><div class="team-controls"><h3 data-i18n="workStyle">Çalışma yoğunluğu</h3><div class="choices" role="group" data-i18n-aria="choiceLabel">
+        <label class="choice"><input type="radio" name="approach" value="quota-saver"><span><strong data-i18n="choiceLess">Daha az kullanım</strong><small data-i18n="choiceLessHelp">Seçince tüm görevler Sonnet olur; ana yönetici ve danışman daha az düşünür. Tasarruf garanti değil.</small></span></label>
+        <label class="choice"><input type="radio" name="approach" value="balanced"><span><strong data-i18n="choiceBalanced">Dengeli</strong><small data-i18n="choiceBalancedHelp">Seçince yönetim, sorun çözümü, danışma ve son kontrol Opus; diğer işler Sonnet olur. Kullanım artabilir.</small></span></label>
+        <label class="choice"><input type="radio" name="approach" value="quality"><span><strong data-i18n="choiceDetailed">Daha ayrıntılı</strong><small data-i18n="choiceDetailedHelp">Seçince her görev Opus olur, düşünme çoğunlukla yüksek. Kullanım artabilir.</small></span></label>
+      </div><div class="team-count"><span data-i18n="helperCount">Yardımcı sayısı</span><div class="team-stepper"><button type="button" id="roster-minus" aria-label="Bir yardımcı azalt" data-i18n-aria="decreaseHelpers">−</button><input id="roster-count" type="number" min="1" max="50" value="1" data-i18n-aria="helperCount" aria-label="Yardımcı sayısı"><button type="button" id="roster-plus" aria-label="Bir yardımcı ekle" data-i18n-aria="increaseHelpers">+</button></div><p class="field-help" data-i18n="countHelp">Ekip kapasitesi; her görevde hepsi başlamaz.</p></div><p id="roster-current" class="field-help"></p><p id="roster-readonly" class="field-help" hidden></p></div><div class="team-stage-wrap"><div class="team-stage-head"><span class="orchestra-kicker" data-i18n="plannedTeam">Planlanan ekip</span><h3 data-i18n="teamStageTitle">Sahnedeki ekibiniz</h3><p data-i18n="plannedTeamIntro">Şef sabittir ve yalnız işleri dağıtır. Yardımcı sayısı aynı anda kaç kişinin çalışacağını zorunlu kılmaz.</p><h4 data-i18n="helpersHeading">Yardımcılar</h4><p id="team-duty-summary" aria-live="polite"></p></div><div id="team-slots" class="team-stage" role="group" data-i18n-aria="teamStageTitle"></div><div class="team-pages"><button type="button" id="team-page-prev" class="secondary" data-i18n-aria="previousPage" aria-label="Önceki sayfa">‹</button><span id="team-page-label"></span><input id="team-page-number" type="number" min="1" max="5" value="1" data-i18n-aria="pageNumber" aria-label="Sayfa numarası"><button type="button" id="team-page-next" class="secondary" data-i18n-aria="nextPage" aria-label="Sonraki sayfa">›</button></div></div><div id="team-inspector" class="team-inspector" aria-live="polite"></div></div>
+      <div class="summary-grid">
+        <div class="summary-card"><span data-i18n="currently">Şu anda</span><strong id="current-choice"></strong><p id="current-note"></p></div>
+        <div class="summary-card pending"><span data-i18n="afterSaving">Kaydedince</span><strong id="pending-choice"></strong><p id="pending-note"></p></div>
+      </div>
+      <p class="field-help" data-i18n="browserSteps">Tarayıcıda iş türünü ve ekibi seçin, Değişiklikleri kontrol et'e basın, ardından aşağıdaki Kur veya Kaydet düğmesine basın. İlk kurulumdan sonra Claude Code'u yeniden başlatın; ajanlar Claude Code'daki görevlerde çalışır.</p>
+      <div class="actions"><button type="button" id="preview" data-i18n="checkChanges">Değişiklikleri kontrol et</button><button type="button" id="restore" class="secondary" data-i18n="restore">Son değişikliği geri al</button></div>
+      <p id="settings-status" class="action-status" role="status" aria-live="polite" hidden></p>
+      <div id="preview-panel" tabindex="-1" class="preview" hidden><h3 data-i18n="previewHeading">Kaydetmeden önce</h3><p id="preview-summary"></p><ul id="preview-changes" class="change-list"></ul><p id="preview-team"></p><p id="preview-next" class="note"></p><details><summary data-i18n="showDetails">Ayrıntıları göster</summary><pre id="preview-text"></pre></details><button type="button" id="save" data-i18n="save">Kaydet</button><p id="save-status" class="action-status" role="status" aria-live="polite" hidden></p></div>
+      <div class="uninstall-section"><h3 data-i18n="uninstallHeading">Kurulumu kaldır</h3><p data-i18n="uninstallHelp">Yalnız yukarıda gösterilen projedeki bu aracın dosyaları incelenir. Son tercih değişikliğini geri alma işleminden farklıdır. Projeniz, değiştirdiğiniz dosyalar ve yedekler korunur.</p><button type="button" id="uninstall-preview" class="secondary" data-i18n="uninstallCheck">Kaldırılacakları kontrol et</button><div id="uninstall-panel" class="preview" hidden><p id="uninstall-target" class="path"></p><ul id="uninstall-actions" class="change-list"></ul><p data-i18n="uninstallPreserved">Değiştirilmiş veya araca ait olmayan dosyalar ve yedekler korunur. Proje klasörü silinmez.</p><label class="uninstall-confirm"><input type="checkbox" id="uninstall-agree"><span data-i18n="uninstallAgree">Bu projedeki kurulumu kaldırmayı onaylıyorum.</span></label><div class="actions"><button type="button" id="uninstall-do" disabled data-i18n="uninstallAction">Kurulumu kaldır</button><button type="button" id="uninstall-cancel" class="secondary" data-i18n="cancel">Vazgeç</button></div></div><p id="uninstall-status" class="action-status" role="status" aria-live="polite" hidden></p></div>
+      <details id="advanced" class="advanced"><summary data-i18n="advanced">İleri ayarlar</summary><p data-i18n="advancedIntro">Görev varsayılanlarını ve aynı anda çalışma sınırını burada değiştirebilirsiniz.</p><div class="advanced-grid"><div class="preset-field"><label><span data-i18n="extraPreset">Başka hazır seçenek</span><select id="preset"><option value="custom" data-i18n="custom">Özel ayar</option><option value="balanced" data-i18n="balanced">Dengeli</option><option value="quality" data-i18n="quality">Ayrıntılı</option><option value="economy" data-i18n="economy">Hafif</option><option value="quota-saver" data-i18n="quotaSaver">Daha az kullanım</option></select></label><p id="preset-explain" class="field-help" aria-live="polite"></p></div><label><span data-i18n="parallel">Aynı anda en fazla yardımcı</span><input id="parallel" type="number" min="1" max="20" value="1"></label></div><p class="field-help" data-i18n="presetHelperNote">Hazır seçenekler yardımcı sayısını değiştirmez.</p><p class="field-help" data-i18n="modelCatalogNote">Claude Code ve Anthropic model listesi, 29 Eylül 2026. Hesap erişiminizi doğrulamaz; Fable kullanım kredisi isteyebilir. Kayıtlı özel model korunur.</p><p class="field-help"><a href="https://code.claude.com/docs/en/model-config" target="_blank" rel="noopener noreferrer" data-i18n="modelSource">Claude Code model kılavuzu</a> · <a href="https://platform.claude.com/docs/en/models/overview" target="_blank" rel="noopener noreferrer" data-i18n="modelSourcePlatform">Anthropic model listesi</a></p><p id="model-specific-note" class="field-help" hidden></p><h3 data-i18n="roleDefaults">Görev varsayılanları</h3><div id="roles" class="role-defaults"></div><details><summary data-i18n="technicalLimits">Teknik sınırlar</summary><p id="settings-limits"></p></details></details>
+    </section>
+    <section id="usage" aria-labelledby="usage-heading" hidden>
+      <h2 id="usage-heading" data-i18n="usageHeading">Toplam kullanım</h2>
+      <p data-i18n="usageIntro">Token, sistemin okuduğu ve yazdığı metnin ölçüsüdür. Buradaki sayılar yalnız seçtiğiniz dosyadan gelir.</p>
+      <div class="actions"><button type="button" id="show-import" class="secondary" data-i18n="chooseUsage">Kullanım dosyası seç</button><button type="button" id="sample" class="secondary" data-i18n="sampleData">Örnek veriler</button></div>
+      <div id="import-panel" class="import-panel" hidden><label><span data-i18n="fileLocation">Kullanım dosyanın konumu</span><input id="source" type="text" autocomplete="off" data-i18n-placeholder="sourcePlaceholder" placeholder="Örn. /Users/.../usage.jsonl"></label><div class="date-row"><label><span data-i18n="fromDate">Başlangıç tarihi</span><input id="start" type="date"></label><label><span data-i18n="toDate">Bitiş tarihi</span><input id="end" type="date"></label></div><button type="button" id="load-usage" data-i18n="readUsage">Kullanımı göster</button><p class="hint" data-i18n="usagePrivacy">Dosya yalnız bu bilgisayarda okunur. Veri toplama kendiliğinden açılmaz.</p><details><summary data-i18n="howUsage">Bu dosyayı nasıl alırım?</summary><p data-i18n="howUsageText">Claude Code kullanım ölçümlerini dışa aktarıyorsanız, kişisel bilgileri çıkarılmış JSON veya JSONL dosyasının konumunu yazın. Dışa aktarımınız yoksa örnek görünümü deneyebilirsiniz.</p></details></div>
+      <div id="usage-result"><p class="empty" data-i18n="usageEmpty">Henüz kullanım dosyası seçilmedi. Dosyanız varsa seçin veya örnek verileri görün.</p></div>
+    </section>
+    <section id="tasks" aria-labelledby="tasks-heading" hidden><h2 id="tasks-heading" data-i18n="tasksHeading">Kayıtlı çalışmalar</h2><p data-i18n="tasksIntro">Burada yalnız bu projede kaydedilmiş çalışmalar görünür.</p><div id="task-result"></div></section>
+  </main>
+  <footer><span data-i18n="footer">Bu sayfa yalnız bu bilgisayarda açılır. Konuşmalarınız burada gösterilmez.</span><button type="button" id="close-console" class="secondary" data-i18n="closeConsole">Konsolu kapat</button></footer>
+</body>
+</html>

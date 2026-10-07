@@ -1,0 +1,12 @@
+Ustam
+Copyright 2026 Mehmet Apak
+
+This product adapts the bounded workflow of Codex Bounded Orchestrator by
+Mehmet Apak for Claude Code project agents.
+
+The earlier Codex work was inspired by codex-astra-luna-orchestrator by
+donvito, distributed under the Apache License, Version 2.0.
+https://github.com/donvito/codex-astra-luna-orchestrator
+
+No endorsement by Anthropic, OpenAI, donvito, or any upstream contributor is
+implied. Claude and Claude Code are trademarks of Anthropic PBC.

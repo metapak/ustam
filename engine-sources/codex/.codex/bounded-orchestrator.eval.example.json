@@ -1,0 +1,6 @@
+{
+  "argv": ["python3", "-m", "unittest", "discover", "-s", "tests"],
+  "include_sanitized_tail": false,
+  "label": "focused-tests",
+  "timeout_seconds": 300
+}

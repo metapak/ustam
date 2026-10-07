@@ -31,7 +31,7 @@ def main(provider=None, argv=None):
     args = parser.parse_args(arguments)
     if provider is not None:
         args.state_dir = state_directory()
-        if provider not in ('codex', 'claude', 'opencode'):
+        if provider not in ('codex', 'claude', 'opencode', 'antigravity'):
             parser.error('Unsupported provider')
     else:
         provider = Path(__file__).parent.parent.name.lstrip('.')

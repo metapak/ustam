@@ -15,12 +15,13 @@ from .runtime import RuntimeAttention, cli_environment, resolve_cli
 ROOT = Path(__file__).resolve().parents[1]
 MAX_MESSAGE = 1024 * 1024
 MAX_RESPONSE = 16 * 1024 * 1024
-PROVIDERS = ('codex', 'claude', 'opencode')
+PROVIDERS = ('codex', 'claude', 'opencode', 'antigravity')
 
 class AdapterError(ValueError):
-    def __init__(self, message, code='adapter_error'):
+    def __init__(self, message, code='adapter_error', stage=None, recovery_status=None):
         super().__init__(message)
         self.code = code
+        self.stage, self.recovery_status = stage, recovery_status
 
 class _Session:
     def __init__(self, provider, timeout, target, usage_cache_dir=None):
@@ -91,7 +92,7 @@ class _Session:
             if response.get('ok') is not True:
                 error = response.get('error', {})
                 code = error.get('code') if error.get('code') in ('usage_index_timeout', 'bounds') else 'adapter_error'
-                raise AdapterError(error.get('message', 'Adapter request failed'), code=code)
+                raise AdapterError(error.get('message', 'Adapter request failed'), code=code, stage=error.get('stage'), recovery_status=error.get('recovery_status'))
             if not isinstance(response.get('result'), dict):
                 raise AdapterError('Invalid adapter result')
             return response['result']

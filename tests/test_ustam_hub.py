@@ -331,7 +331,7 @@ print(json.dumps(store.read()),flush=True)
             status,result=bootstrap()
             self.assertEqual(status,200)
             self.assertFalse(result['capabilities']['jobs'])
-            self.assertEqual(result['providers'],['codex','claude','opencode'])
+            self.assertEqual(result['providers'],['codex','claude','opencode','antigravity'])
             self.assertEqual(result['capabilities']['native_picker']['endpoint'],'/api/projects/pick')
             for provider,concurrency in [('codex',10),('claude',20),('opencode',1)]:
                 capability=result['capabilities']['providers'][provider]

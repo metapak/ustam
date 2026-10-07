@@ -17,7 +17,7 @@ MAX_MESSAGE = 1024 * 1024
 MAX_RESPONSE = 16 * 1024 * 1024
 BASE = Path(__file__).resolve().parent
 sys.dont_write_bytecode = True
-PROVIDERS = ('codex', 'claude', 'opencode')
+PROVIDERS = ('codex', 'claude', 'opencode', 'antigravity')
 METHODS = {'inspect', 'preview', 'apply', 'restore', 'usage', 'models'}
 
 def verify_engine(provider):
@@ -51,7 +51,7 @@ class Engine:
         tools = self.root / ('.claude/tools' if provider == 'claude' else '.opencode/tools')
         sys.path[:] = [str(self.root / 'scripts'), *([str(tools)] if provider != 'codex' else []), *standard]
         self.installer = importlib.import_module('install')
-        self.module = importlib.import_module({'codex': 'dashboard', 'claude': 'console_settings', 'opencode': 'console'}[provider])
+        self.module = importlib.import_module({'codex': 'dashboard', 'claude': 'console_settings', 'opencode': 'console', 'antigravity': 'console_settings'}[provider])
         self.backend, self.target, self.pending = None, None, None
 
     def select(self, target):
@@ -61,7 +61,14 @@ class Engine:
         if self.target is not None and path != self.target:
             raise ValueError('Worker is bound to one canonical project')
         if self.backend is None:
-            if self.provider == 'codex':
+            if self.provider == 'antigravity':
+                if getattr(sys, 'frozen', False):
+                    command = [sys.executable, '--work-protocol', 'antigravity']
+                else:
+                    code = 'import sys; sys.path.insert(0, ' + repr(str(BASE.parent)) + '); from ustam.__main__ import main; raise SystemExit(main())'
+                    command = [sys.executable, '-I', '-c', code, '--work-protocol', 'antigravity']
+                self.backend = self.module.Settings(path, bridge_command=command)
+            elif self.provider == 'codex':
                 self.backend = self.module.Console(path, Path.home() / '.codex/sessions')
             elif self.provider == 'claude':
                 self.backend = self.module.Settings(self.installer, self.root, path)
@@ -201,6 +208,8 @@ class Engine:
 
     def call(self, method, target, params):
         self.select(target)
+        if self.provider == 'antigravity':
+            return self.backend.call(method, params)
         if method == 'inspect': return self.inspect()
         if method == 'models': return self.models()
         if method == 'usage':
@@ -263,6 +272,10 @@ def main(argv=None):
             timeout_type = getattr(getattr(engine.module, 'usage', None), 'UsageIndexTimeout', ())
             code = 'usage_index_timeout' if engine.provider == 'codex' and isinstance(exc, timeout_type) else 'adapter_error'
             response = {'reqid': reqid, 'ok': False, 'error': {'code': code, 'message': scrub(str(exc))}}
+            if getattr(exc, 'stage', None) in ('preflight', 'backup', 'applied', 'verified', 'restore'):
+                response['error']['stage'] = exc.stage
+            if getattr(exc, 'recovery_status', None) in ('not_started', 'rolled_back', 'conflicts_retained'):
+                response['error']['recovery_status'] = exc.recovery_status
         data = (json.dumps(response, allow_nan=False) + '\n').encode()
         if len(data) > MAX_RESPONSE:
             data = (json.dumps({'reqid': reqid, 'ok': False, 'error': {'code': 'bounds', 'message': 'Adapter result exceeded bounds'}}) + '\n').encode()

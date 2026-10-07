@@ -1,5 +1,6 @@
 """Hub operations and bound previews over provider adapters."""
 import copy
+from pathlib import Path
 from datetime import datetime, timezone
 import os
 import tempfile
@@ -34,7 +35,7 @@ class Hub:
     def bootstrap(self):
         data = self.store.read()
         data['providers'] = list(PROVIDERS)
-        data['capabilities'] = {'native_picker': {'endpoint': '/api/projects/pick'}, 'jobs': self.jobs is not None, 'works': {'schema_version': 1, 'endpoint': '/api/works', 'source': 'local_protocol'}, 'providers': {provider: {'max_concurrency': limit, 'jobs': Runtime.job_capabilities(provider)} for provider, limit in (('codex', 10), ('claude', 20), ('opencode', 1))}}
+        data['capabilities'] = {'native_picker': {'endpoint': '/api/projects/pick'}, 'jobs': self.jobs is not None, 'works': {'schema_version': 1, 'endpoint': '/api/works', 'source': 'local_protocol'}, 'providers': {provider: {'max_concurrency': limit, 'jobs': Runtime.job_capabilities(provider)} for provider, limit in (('codex', 10), ('claude', 20), ('opencode', 1), ('antigravity', 1))}}
         return data
     def provider(self, value):
         if value not in PROVIDERS:
@@ -130,7 +131,7 @@ class Hub:
         if not isinstance(value.get('chief'), dict) or not isinstance(value.get('helpers'), list):
             raise ValueError('Chief and helpers are required')
         concurrency = value.get('concurrency')
-        if isinstance(concurrency, bool) or not isinstance(concurrency, int) or not 1 <= concurrency <= {'codex': 10, 'claude': 20, 'opencode': 1}[value['provider']]:
+        if isinstance(concurrency, bool) or not isinstance(concurrency, int) or not 1 <= concurrency <= {'codex': 10, 'claude': 20, 'opencode': 1, 'antigravity': 1}[value['provider']]:
             raise ValueError('Concurrency is unsupported by the selected provider')
         helper_ids = set()
         for helper in value['helpers']:
@@ -143,6 +144,12 @@ class Hub:
             helper_ids.add(helper['id'])
         if not isinstance(value['chief'].get('model'), str) or not value['chief']['model'] or not isinstance(value['chief'].get('effort'), str):
             raise ValueError('Chief needs model and effort')
+        if value['provider'] == 'antigravity':
+            selections = [value['chief'], *value['helpers']]
+            if not 1 <= len(value['helpers']) <= 50 or any(x.get('model') not in ('inherit', 'flash', 'pro') or x.get('effort') != '' for x in selections):
+                raise ValueError('Antigravity teams require inherit/flash/pro and empty effort')
+            if any(h['role'].replace('-', '_') not in Runtime.ROLES for h in value['helpers']):
+                raise ValueError('Unsupported Antigravity role')
         return value
     def orchestras(self, body):
         if body.get('action') == 'save':
@@ -212,12 +219,15 @@ class Hub:
                         output = self.adapters.preview(provider, target['path'], payload)
                         if not isinstance(output, dict) or not output.get('preview_id'):
                             raise ValueError('Adapter did not return a bound preview')
+                        root_identity = output.get('root_identity') if provider == 'antigravity' else None
+                        if provider == 'antigravity' and (not isinstance(root_identity, dict) or set(root_identity) != {'device', 'inode'} or any(type(v) is not int for v in root_identity.values()) or root_identity['inode'] <= 0):
+                            raise ValueError('Antigravity preview did not bind project directory identity')
                         ident = uuid.uuid4().hex
                         with self.lock:
                             self.previews = {key: item for key, item in self.previews.items() if time.monotonic() - item['created'] <= 300}
                             if len(self.previews) >= 1000:
                                 raise ValueError('Too many pending previews; apply or restart the hub')
-                            self.previews[ident] = {'project': target, 'provider': provider, 'payload': payload, 'revision': revision, 'adapter_id': output['preview_id'], 'created': time.monotonic()}
+                            self.previews[ident] = {'project': target, 'provider': provider, 'payload': payload, 'revision': revision, 'adapter_id': output['preview_id'], 'created': time.monotonic(), 'root_identity': root_identity}
                         result.update(preview_id=ident, preview=output)
                     else:
                         if action == 'restore':
@@ -238,6 +248,10 @@ class Hub:
                         result['result'] = output
             except Exception as error:
                 result.update(ok=False, error=str(error))
+                if getattr(error, 'stage', None) in ('preflight', 'backup', 'applied', 'verified', 'restore'):
+                    result['stage'] = error.stage
+                if getattr(error, 'recovery_status', None) in ('not_started', 'rolled_back', 'conflicts_retained'):
+                    result['recovery_status'] = error.recovery_status
                 if result.get('provider_restore_succeeded'):
                     result.update(receipt_status='receipt_failed', error='Provider restore succeeded; usage receipt could not be saved.')
             results.append(result)
@@ -276,6 +290,8 @@ class Hub:
                 if entry != prior and (entry.get('active') or prior):
                     self._record_installation(target, provider, entry)
                 boundary = {'status': 'verified' if entry.get('active') else 'unverified', 'started_at': entry.get('started_at'), 'conservative': bool(entry.get('adopted'))}
+            if provider == 'antigravity':
+                return {'provider': provider, 'status': 'unsupported', 'source': 'none', 'installation_boundary': boundary, 'totals': {}, 'records': [], 'limitations': ['No verified trusted project-scoped Antigravity CLI usage record source.']}
             if not entry.get('active'):
                 return {'status': 'unavailable', 'source': 'none', 'installation_boundary': boundary, 'totals': {}, 'records': []}
             output = self.adapters.usage(provider, target['path'])
@@ -302,6 +318,10 @@ class Hub:
                     current = self.targets([target['id']])[0]
                     if current['path'] != target['path'] or bound['revision'] != self.store.read()['revision'] or time.monotonic() - bound['created'] > 300:
                         raise ValueError('Preview expired or metadata changed; preview again')
+                    if bound.get('root_identity') is not None:
+                        info = Path(target['path']).stat(follow_symlinks=False)
+                        if bound['root_identity'] != {'device': info.st_dev, 'inode': info.st_ino}:
+                            raise ValueError('Project directory identity changed since preview; no mutation permitted')
                     with self.mutation(target['path']), self.installations.lock:
                         provider = bound['provider']
                         _, prior, before = self._installation(target, provider)
@@ -323,6 +343,10 @@ class Hub:
                             result['receipt_status'] = 'installation_unverified'
             except Exception as error:
                 result.update(ok=False, error=str(error))
+                if getattr(error, 'stage', None) in ('preflight', 'backup', 'applied', 'verified', 'restore'):
+                    result['stage'] = error.stage
+                if getattr(error, 'recovery_status', None) in ('not_started', 'rolled_back', 'conflicts_retained'):
+                    result['recovery_status'] = error.recovery_status
                 if result.get('provider_apply_succeeded'):
                     result['receipt_status'] = 'receipt_failed'
                     result['error'] = 'Provider apply succeeded; usage receipt could not be saved.'

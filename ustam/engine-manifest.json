@@ -1,6 +1,18 @@
 {
   "closure": "All tracked runtime/instruction/template/preset/script trees; tests, docs, launchers and setup wrappers are not read by backend APIs.",
   "engines": {
+    "antigravity": {
+      "commit": "80613c6c7c11d2a3398b3499a402f328575f0fe0",
+      "files": {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "NOTICE": "346a6b91dc15e79a09702e7adb693456fd150bfeaf8c4409d88ad059980a4dcf",
+        "VERSION": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+        "scripts/console_settings.py": "b015d368c4f320bd273937f497a168230b4b95bdcaa0a6362e01ee9eb552ee75",
+        "scripts/install.py": "d2b030ee2d4d97e313ad6468544cb94b3042a58cb7ec02c38f867642a74acda2"
+      },
+      "source_prefix": "engine-sources/antigravity",
+      "source_repository": "codex-bounded-orchestrator"
+    },
     "claude": {
       "commit": "aeefd8551d106c9b43e5fc6490fdfee1047aecbc",
       "files": {

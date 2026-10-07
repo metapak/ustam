@@ -25,7 +25,7 @@ SCHEMA = 1
 MAX_STATE = 8 * 1024 * 1024
 MAX_FILE = 8 * 1024 * 1024
 MAX_FILES = 2000
-PROVIDERS = ('codex', 'claude', 'opencode')
+PROVIDERS = ('codex', 'claude', 'opencode', 'antigravity')
 _LOCK = threading.RLock()
 
 

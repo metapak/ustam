@@ -94,6 +94,10 @@ def evidence(target, provider):
     try:
         raw = read_local(root, relative)
         manifest = json.loads(raw)
+        if provider == 'antigravity':
+            info = root.stat(follow_symlinks=False)
+            if root.is_symlink() or manifest.get('root_identity') != {'device': info.st_dev, 'inode': info.st_ino}:
+                return result
         if not owned_manifest(root, manifest, provider, verify=True):
             return result
         result.update(installed=True, manifest_sha=hashlib.sha256(raw).hexdigest())

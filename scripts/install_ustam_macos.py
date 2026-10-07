@@ -45,7 +45,7 @@ def verify_source_assets(source):
     safe('scripts/build_ustam_app.py')
     safe('launchers/ustam_worker.py')
     manifest = json.loads(safe('ustam/engine-manifest.json').read_text())
-    if manifest.get('schema') != 1 or set(manifest.get('engines', {})) != {'codex', 'claude', 'opencode'}:
+    if manifest.get('schema') != 1 or set(manifest.get('engines', {})) != {'codex', 'claude', 'opencode', 'antigravity'}:
         raise ValueError('Invalid engine manifest')
     for provider, record in manifest['engines'].items():
         base = safe('ustam/engines/' + provider)

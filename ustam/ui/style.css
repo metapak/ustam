@@ -44,3 +44,6 @@
 
 /* Functional SVG icons inherit each control’s burgundy, gold, or ivory color. */
 .ui-icon{display:inline-block;width:18px;height:18px;flex-shrink:0;vertical-align:middle;pointer-events:none}.nav-icon .ui-icon,.project-icon .ui-icon{width:20px;height:20px}.modal-close{padding:0;min-height:32px}.modal-close .ui-icon{width:18px;height:18px}
+
+/* Native provider support and completed install receipts. */
+.provider-support{border-left:3px solid var(--gold);padding:2px 14px;margin:14px 0}.provider-support p{font-size:13px;line-height:1.65;margin:8px 0;overflow-wrap:anywhere}.install-phases{display:flex;flex-wrap:wrap;gap:9px 18px;list-style:none;padding:0;margin:14px 0}.install-phases:empty{display:none}.install-phases li{font-size:12px;line-height:1.6}.install-phases .completed{color:#3e7352}.install-phases .failed{color:var(--wine)}.usage-unsupported{margin-top:24px;line-height:1.7}@media(min-width:1100px){.provider-list{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:720px){.install-phases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}}

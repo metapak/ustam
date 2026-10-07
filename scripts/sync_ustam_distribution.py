@@ -12,7 +12,11 @@ import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = '.ustam-distribution.json'
-FILES = ('ustam/ui/icons.mjs', 'scripts/build_ustam_app.py', 'scripts/build_ustam_engines.py', 'scripts/sync_ustam_distribution.py', 'scripts/install_ustam_macos.py',
+FILES = ('engine-sources/antigravity/LICENSE', 'engine-sources/antigravity/NOTICE',
+         'engine-sources/antigravity/VERSION', 'engine-sources/antigravity/scripts/install.py',
+         'engine-sources/antigravity/scripts/console_settings.py', 'tests/test_antigravity.py',
+         'tests/ustam_antigravity_ui.cjs', 'tests/ustam_install_ui.cjs',
+         'docs/antigravity.md', 'docs/antigravity.tr.md', 'ustam/ui/icons.mjs', 'scripts/build_ustam_app.py', 'scripts/build_ustam_engines.py', 'scripts/sync_ustam_distribution.py', 'scripts/install_ustam_macos.py',
          'launchers/Install Ustam.applescript',
          'launchers/launch_ustam.py', 'launchers/ustam_worker.py', '.github/workflows/ustam-app.yml',
          'docs/ustam-hub.md', 'docs/ustam-hub.tr.md',

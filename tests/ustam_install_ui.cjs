@@ -23,7 +23,7 @@ const assert = require('node:assert/strict');
    await page.locator(selector).locator('.chief-actor svg').evaluate(svg=>{window.motionChief=svg;});await page.locator(selector).locator('.stage-helper').first().click();assert.ok(await page.locator(selector).locator('.chief-actor svg').evaluate(svg=>svg===window.motionChief));assert.equal(await page.locator(selector).locator('.actor-metadata').count(),1+await page.locator(selector).locator('.stage-helper').count());motionProof.push({surface:name,first,next});
   };
   const install = async()=>{await flow().getByRole('button',{name:'Install in project',exact:true}).click();await page.locator('#modal .result').waitFor();await page.waitForFunction(()=>!document.querySelector('#notice').classList.contains('busy'));};
-  const close = ()=>page.locator('#modal').getByRole('button',{name:'Close',exact:true}).click();
+  const close = ()=>page.locator('#modal .modal-actions').getByRole('button',{name:'Close',exact:true}).click();
   await ready();assert.equal(await page.locator('.job-box, .job-box textarea').count(),0);assert.equal(await page.getByRole('button',{name:'View work steps',exact:true}).count(),0);
   // Choose a ready team: saving the choice cannot install or start work.
   await flow().getByRole('button',{name:'Change team',exact:true}).click();

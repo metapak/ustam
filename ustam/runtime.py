@@ -28,6 +28,7 @@ def _known_cli_bins(environment, platform):
         local = environment.get('LOCALAPPDATA')
         roaming = environment.get('APPDATA')
         if local:
+            bins.append(Path(local) / 'agy' / 'bin')
             bins.append(Path(local) / 'Microsoft' / 'WinGet' / 'Links')
         if roaming:
             bins.append(Path(roaming) / 'npm')
@@ -72,19 +73,20 @@ def _cli_bins(environment, project=None, platform=None):
 
 def resolve_cli(provider, project=None, env=None, platform=None):
     """Find a fixed CLI outside project/cwd, including desktop launch PATH fallbacks."""
-    if provider not in ('codex', 'claude', 'opencode'):
+    if provider not in ('codex', 'claude', 'opencode', 'antigravity'):
         raise RuntimeAttention('Unsupported provider CLI.')
     environment = dict(os.environ if env is None else env)
     platform = platform or os.name
     bins = _cli_bins(environment, project, platform)
+    command = 'agy' if provider == 'antigravity' else provider
     separator = ';' if platform == 'nt' else os.pathsep
     # On Windows only native executables reach Popen; batch shims can invoke cmd.exe
     # even with shell=False and cannot safely receive an arbitrary user prompt.
     if platform == 'nt':
-        candidates = [directory / (provider + '.exe') for directory in bins]
+        candidates = [directory / (command + '.exe') for directory in bins]
     else:
-        candidate = shutil.which(provider, path=separator.join(str(directory) for directory in bins))
-        candidates = ([Path(candidate)] if candidate else []) + [directory / provider for directory in bins]
+        candidate = shutil.which(command, path=separator.join(str(directory) for directory in bins))
+        candidates = ([Path(candidate)] if candidate else []) + [directory / command for directory in bins]
     for candidate in candidates:
         if candidate.is_file() and _outside_workspace(candidate, project):
             resolved = candidate.resolve()
@@ -92,7 +94,7 @@ def resolve_cli(provider, project=None, env=None, platform=None):
                 continue
             if platform == 'nt' or os.access(resolved, os.X_OK):
                 return str(resolved)
-    if platform == 'nt' and any((directory / (provider + extension)).is_file() for directory in bins for extension in ('.cmd', '.bat', '.CMD', '.BAT')):
+    if platform == 'nt' and any((directory / (command + extension)).is_file() for directory in bins for extension in ('.cmd', '.bat', '.CMD', '.BAT')):
         raise RuntimeAttention(f'{provider} batch shim cannot safely receive job prompts. Install its native CLI executable and sign in separately.')
     raise RuntimeAttention(f'Install {provider} and sign in with its own CLI before starting.')
 
@@ -126,8 +128,10 @@ class Runtime:
     @staticmethod
     def job_capabilities(provider):
         """Report Hub job limits, separately from saved native team settings."""
-        if provider not in ('codex', 'claude', 'opencode'):
+        if provider not in ('codex', 'claude', 'opencode', 'antigravity'):
             raise ValueError('Unsupported provider')
+        if provider == 'antigravity':
+            return {'enabled': False, 'supported_roles': [], 'execution_roles': [], 'required_roles': [], 'max_helper_slots': 0, 'helper_concurrency': 0, 'reason': 'Antigravity unattended permission and completion contracts are unverified; use the manual Works bridge.'}
         supported = [role for role in Runtime.ROLES if provider != 'claude' or role != 'fast_lookup']
         execution = Runtime.REQUIRED_ROLES if provider == 'opencode' else supported
         return {'max_helper_slots': Runtime.MAX_HELPER_SLOTS,

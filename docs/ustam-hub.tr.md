@@ -2,7 +2,7 @@
 
 Ustam’ı aç → Uygulamaları seç → Projeleri ekle → Orkestra seç → Projeye kur.
 
-Ustam, Codex, Claude Code ve OpenCode için tek yerel tarayıcı hub’ıdır. Kullanacağınız uygulamaları seçin, proje klasörlerini ekleyin; projenin ayar alanında orkestra seçin veya oluşturun. Orkestra kaydetmek yeniden kullanılabilir ayarları kaydeder; sağlayıcı görevi başlatmaz. **Projeye kur** hedef dosyaları kontrol eder ve çakışmasız projelere tek işlemde kurar. Sonuçlar her proje için gösterilir. Çakışmalar ve hatalar görünür kalır; yalnızca doğrulanmış başarılı kurulumlar mevcut oturumda kurulu rozeti alır. Kurulum sohbete mesaj göndermez ve sağlayıcı görevi başlatmaz. Ana kurulum ekranında iş açıklaması veya çalışma planı istenmez.
+Ustam, Codex, Claude Code, OpenCode ve Antigravity için tek yerel tarayıcı hub’ıdır. Kullanacağınız uygulamaları seçin, proje klasörlerini ekleyin; projenin ayar alanında orkestra seçin veya oluşturun. Orkestra kaydetmek yeniden kullanılabilir ayarları kaydeder; sağlayıcı görevi başlatmaz. **Projeye kur** hedef dosyaları kontrol eder ve çakışmasız projelere tek işlemde kurar. Sonuçlar her proje için gösterilir. Çakışmalar ve hatalar görünür kalır; yalnızca doğrulanmış başarılı kurulumlar mevcut oturumda kurulu rozeti alır. Kurulum sohbete mesaj göndermez ve sağlayıcı görevi başlatmaz. Ana kurulum ekranında iş açıklaması veya çalışma planı istenmez.
 
 ## İş türüne göre hazır ekipler
 
@@ -20,6 +20,10 @@ Hazır ekipten önce iş türünü seçin. Her önerilen ekip keşif, uygulama, 
 | Güvenlik | Araştırmacı, danışman | 6 | 4 |
 
 Öneriler seçilen sağlayıcının kataloğundaki desteklenen rolleri ve modelleri kullanır. Desteklenmeyen uzman sayıyı azaltabilir; eksik modeller kaydetmeden önce tamamlanmalıdır. Ekibi düzenleyebilirsiniz; iş türünü değiştirmek düzenlemelerinizi sessizce ezmez. Sayılar hazırlanan ayarları anlatır; her yardımcının aynı anda çalışacağını garanti etmez. OpenCode şu anda desteklenen dört yürütme rolünü görevlendirir; hub yardımcıları sırayla çalıştırır.
+
+## Antigravity
+
+Proje kurulumu `inherit`, `flash` ve `pro` model katmanlarını, korumalı kurulum/geri alma makbuzlarını ve manuel İşler köprüsünü destekler. Antigravity Jobs ve ölçülmüş kullanım desteklenmez. Native model çalışması ve salt okunur şef zorlaması doğrulanmış değildir. [Antigravity desteğine bakın](antigravity.tr.md).
 
 ## Yerel paket kurulumu
 
@@ -55,4 +59,4 @@ Sağlayıcı çalışma sınırları ekip ayarlarından ayrı gösterilir. Her s
 
 [Eski sağlayıcı konsolu](legacy-console.tr.md), ekran görüntüleri, on görev şablonları ve önce proje seçen başlatıcılar ileri düzey uyumluluk referansıdır. Güncel birleşik hub’dan ayrıdır.
 
-[Beta.3 sürüm notları](release-ustam-v1.0.0-beta.3.tr.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.3/ustam-1.0.0-beta.3-macos-arm64.zip). Windows/Linux yerel indirmeleri beta.2 olarak kalır.
+[Beta.4 sürüm notları](release-ustam-v1.0.0-beta.4.tr.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.4/ustam-1.0.0-beta.4-macos-arm64.zip). Windows/Linux yerel indirmeleri beta.2 olarak kalır.

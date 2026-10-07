@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def verify_assets(root=ROOT):
     manifest = json.loads((root / 'ustam/engine-manifest.json').read_text())
-    if manifest.get('schema') != 1 or set(manifest.get('engines', {})) != {'codex', 'claude', 'opencode'}:
+    if manifest.get('schema') != 1 or set(manifest.get('engines', {})) != {'codex', 'claude', 'opencode', 'antigravity'}:
         raise ValueError('Invalid engine manifest')
     for provider, record in manifest['engines'].items():
         base = root / 'ustam/engines' / provider

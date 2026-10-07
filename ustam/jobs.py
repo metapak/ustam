@@ -122,6 +122,8 @@ class JobManager:
             if not isinstance(orchestra, dict):
                 raise ValueError('Selected orchestra is required')
             provider = orchestra.get('provider', payload.get('provider'))
+            if provider == 'antigravity':
+                raise ValueError('Antigravity unattended Jobs are unsupported; use the manual Works bridge.')
             if provider not in ('codex', 'claude', 'opencode'):
                 raise ValueError('Unsupported provider')
             if payload.get('provider', provider) != provider:

@@ -2,7 +2,7 @@
 
 Open Ustam → Select apps → Add projects → Choose an orchestra → Install in project.
 
-Ustam is one local browser hub for Codex, Claude Code and OpenCode. Select the apps you use, add project folders, then choose or create an orchestra in that project's setup area. Saving an orchestra saves reusable configuration; it does not start a provider job. Select **Install in project** to validate the target files and install into projects without conflicts in one action. Results appear for each project. Conflicts and errors remain visible; only confirmed successful installations receive an installed badge during the current session. Installation sends no chat messages and starts no provider jobs. The main setup screen requires no work description or work plan.
+Ustam is one local browser hub for Codex, Claude Code, OpenCode and Antigravity. Select the apps you use, add project folders, then choose or create an orchestra in that project's setup area. Saving an orchestra saves reusable configuration; it does not start a provider job. Select **Install in project** to validate the target files and install into projects without conflicts in one action. Results appear for each project. Conflicts and errors remain visible; only confirmed successful installations receive an installed badge during the current session. Installation sends no chat messages and starts no provider jobs. The main setup screen requires no work description or work plan.
 
 ## Ready teams by work type
 
@@ -21,7 +21,11 @@ Choose the work type before a ready team. Every suggested team includes explorat
 
 Suggestions use supported roles and models from the selected provider's catalog. An unavailable specialist can reduce the count; missing models require completion before saving. You can edit the team, and changing the work type does not silently overwrite your edits. These counts describe prepared configuration, not a promise that every helper runs simultaneously. OpenCode currently dispatches its four supported execution roles; the hub runs helpers one at a time.
 
-[Beta.3 release notes](release-ustam-v1.0.0-beta.3.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.3/ustam-1.0.0-beta.3-macos-arm64.zip). Windows/Linux native downloads remain beta.2.
+[Beta.4 release notes](release-ustam-v1.0.0-beta.4.md) · [Mac arm64 ZIP](https://github.com/metapak/ustam-codex-orchestrator/releases/download/ustam-v1.0.0-beta.4/ustam-1.0.0-beta.4-macos-arm64.zip). Windows/Linux native downloads remain beta.2.
+
+## Antigravity
+
+Project setup supports `inherit`, `flash` and `pro` model tiers, protected installation/restore receipts and the manual Works bridge. Antigravity Jobs and measured usage are unsupported. Native model execution and read-only chief enforcement remain unverified. See [Antigravity support](antigravity.md).
 
 ## Native installation
 

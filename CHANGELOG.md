@@ -1,5 +1,9 @@
 # Changelog
 
+## Ustam 1.0.0-beta.4 — 2026-10-07
+
+Antigravity joins the shared hub with inherit/flash/pro team models, protected project installation and restore receipts, and the manual Works bridge. Existing provider setups and user files remain protected. Antigravity Jobs and measured usage are unsupported. Mac arm64 package only; Windows/Linux downloads remain beta.2. [English notes](docs/release-ustam-v1.0.0-beta.4.md) · [Türkçe sürüm notları](docs/release-ustam-v1.0.0-beta.4.tr.md).
+
 ## Ustam 1.0.0-beta.3 — 2026-10-06
 
 Current shared hub, bounded manual work protocol, acceptance-test author, ownership/rollback fixes, provider parity, cached usage, locale/pending UI, SVG icons, Mac lifecycle/package improvements and Turkish trailer. [Full English notes](docs/release-ustam-v1.0.0-beta.3.md) · [Türkçe sürüm notları](docs/release-ustam-v1.0.0-beta.3.tr.md). Mac arm64 package only; Windows/Linux remain beta.2.

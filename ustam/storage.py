@@ -74,7 +74,7 @@ def process_lock(path):
             lock = _LOCKS[key] = ProcessRLock(path)
         return lock
 
-PROVIDERS = ('codex', 'claude', 'opencode')
+PROVIDERS = ('codex', 'claude', 'opencode', 'antigravity')
 
 def default_state_dir():
     if sys.platform == 'darwin':

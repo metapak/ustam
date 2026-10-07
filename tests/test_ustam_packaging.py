@@ -31,9 +31,41 @@ def load(name, path):
 builder = load('ustam_builder', 'scripts/build_ustam_app.py')
 launcher = load('ustam_launcher', 'launchers/launch_ustam.py')
 syncer = load('ustam_syncer', 'scripts/sync_ustam_distribution.py')
+engine_builder = load('ustam_engine_builder', 'scripts/build_ustam_engines.py')
 
 
 class PackagingTests(unittest.TestCase):
+    def test_immutable_engine_source_prefix_excludes_private_and_generated_files(self):
+        prefix = 'engine-sources/antigravity/'
+        names = [prefix+'VERSION', prefix+'.antigravity/tools/work_protocol.py',
+                 prefix+'scripts/install.py', prefix+'tests/private_fixture.json',
+                 prefix+'qa-artifacts/private.json', 'ustam/engines/antigravity/VERSION',
+                 'engine-sources/antigravity-other/scripts/install.py']
+        tree = b''.join(b'100644 blob '+b'a'*40+b'\t'+name.encode()+b'\0' for name in names)
+        def read(repo, *args):
+            if args[0] == 'ls-tree':
+                return tree
+            self.assertEqual(args[0], 'show')
+            return args[1].encode()
+        with patch.object(engine_builder, 'git', side_effect=read) as reader:
+            files = engine_builder.frozen_files(ROOT, 'a'*40, prefix)
+        self.assertEqual(set(files), {'VERSION', '.antigravity/tools/work_protocol.py', 'scripts/install.py'})
+        self.assertTrue(all(data.startswith(('a'*40+':'+prefix).encode()) for data in files.values()))
+        self.assertEqual(reader.call_count, 4)
+
+    def test_immutable_engine_source_rejects_unsafe_prefix_pin_and_symlink(self):
+        for prefix in ('/', '/absolute', '../outside', 'engine-sources/../outside', 'engine-sources//outside'):
+            with self.assertRaisesRegex(ValueError, 'prefix'):
+                engine_builder.frozen_files(ROOT, 'a'*40, prefix)
+        with self.assertRaisesRegex(ValueError, 'commit ID'):
+            engine_builder.frozen_files(ROOT, 'HEAD')
+        with patch.object(engine_builder, 'git', return_value=b'120000 blob '+b'a'*40+b'\tengine-sources/antigravity/scripts/install.py\0'):
+            with self.assertRaisesRegex(ValueError, 'Nonregular'):
+                engine_builder.frozen_files(ROOT, 'a'*40, 'engine-sources/antigravity')
+        with patch.object(engine_builder, 'git', return_value=b''):
+            with self.assertRaisesRegex(ValueError, 'Empty'):
+                engine_builder.frozen_files(ROOT, 'a'*40, 'engine-sources/antigravity')
+
     def test_startup_notice_is_bounded_and_closed_on_ready_or_timeout(self):
         from unittest.mock import Mock
         process = Mock()
@@ -310,7 +342,7 @@ class PackagingTests(unittest.TestCase):
 
     def test_manifest_closure_hash_and_ui_assets(self):
         manifest = builder.verify_assets()
-        self.assertEqual(set(manifest['engines']), {'codex', 'claude', 'opencode'})
+        self.assertEqual(set(manifest['engines']), {'codex', 'claude', 'opencode', 'antigravity'})
         for record in manifest['engines'].values():
             self.assertRegex(record['commit'], r'^[a-f0-9]{40}$')
             self.assertTrue(record['files'])
@@ -321,7 +353,7 @@ class PackagingTests(unittest.TestCase):
             (root / 'ustam').mkdir()
             manifest = {'schema': 1, 'engines': {}}
             import hashlib
-            for provider in ('codex', 'claude', 'opencode'):
+            for provider in ('codex', 'claude', 'opencode', 'antigravity'):
                 base = root / 'ustam/engines' / provider
                 base.mkdir(parents=True)
                 (base / 'VERSION').write_text('1')
@@ -406,7 +438,7 @@ class PackagingTests(unittest.TestCase):
     def test_frozen_adapter_stdio_all_providers(self):
         worker = os.environ['USTAM_FROZEN_WORKER']
         with tempfile.TemporaryDirectory() as directory:
-            for provider in ('codex', 'claude', 'opencode'):
+            for provider in ('codex', 'claude', 'opencode', 'antigravity'):
                 project = Path(directory) / provider
                 project.mkdir()
                 request = {'reqid': uuid.uuid4().hex, 'method': 'inspect', 'target': str(project), 'params': {}}
@@ -423,7 +455,16 @@ class PackagingTests(unittest.TestCase):
         worker = os.environ['USTAM_FROZEN_WORKER']
         with tempfile.TemporaryDirectory() as directory:
             state = Path(directory) / 'state'
-            env = {**os.environ, 'PATH': '', 'HOME': directory, 'USERPROFILE': directory, 'LOCALAPPDATA': directory, 'APPDATA': directory, 'PYTHONPATH': '', 'PYTHONHOME': ''}
+            bins = Path(directory) / 'fixture-bin'
+            bins.mkdir()
+            agy = bins / ('agy.cmd' if os.name == 'nt' else 'agy')
+            if os.name == 'nt':
+                agy.write_text('@echo off\nif "%~1"=="--version" (echo 1.2.16) else if "%~1"=="--help" (echo --agent --model --output-format agents) else (exit /b 9)\n')
+            else:
+                agy.write_text('#!/bin/sh\ncase "$1" in\n--version) printf "1.2.16\\n";;\n--help) printf "%s\\n" "--agent --model --output-format agents";;\n*) exit 9;;\nesac\n')
+                agy.chmod(0o755)
+            # The fixture implements only help/version, never an agent/model call.
+            env = {**os.environ, 'PATH': str(bins), 'HOME': directory, 'USERPROFILE': directory, 'LOCALAPPDATA': directory, 'APPDATA': directory, 'PYTHONPATH': '', 'PYTHONHOME': ''}
             process = subprocess.Popen([worker, '--no-browser', '--state-dir', str(state)],
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env, cwd='/' if os.name != 'nt' else directory)
             try:
@@ -442,20 +483,20 @@ class PackagingTests(unittest.TestCase):
                         return json.load(response)
                 bootstrap = request('/api/bootstrap')
                 self.assertEqual(bootstrap['projects'], [])
-                self.assertEqual(set(bootstrap['providers']), {'codex', 'claude', 'opencode'})
+                self.assertEqual(set(bootstrap['providers']), {'codex', 'claude', 'opencode', 'antigravity'})
                 for asset in ('/', '/app.js', '/style.css'):
                     with urllib.request.urlopen(origin+asset, timeout=5) as response:
                         self.assertEqual(response.status, 200)
                 csrf = bootstrap['csrf']
-                for provider in ('codex', 'claude', 'opencode'):
+                for provider in ('codex', 'claude', 'opencode', 'antigravity'):
                     project = Path(directory) / provider
                     project.mkdir()
                     request('/api/projects', {'action':'add', 'path':str(project)}, csrf)
                     registered = request('/api/bootstrap')['projects']
                     ident = next(p['id'] for p in registered if p['path'] == str(project.resolve()))
-                    model = {'codex':'gpt-6.1-sol', 'claude':'sonnet', 'opencode':'openai/gpt-6.1-sol'}[provider]
-                    payload = {'name': 'Offline package check', 'provider': provider, 'chief': {'model': model, 'effort': '' if provider == 'opencode' else 'medium'},
-                               'helpers': [{'id':'one', 'role':'implementer', 'name':'Implementation', 'model':model, 'effort': '' if provider == 'opencode' else 'medium'}],
+                    model = {'codex':'gpt-6.1-sol', 'claude':'sonnet', 'opencode':'openai/gpt-6.1-sol', 'antigravity':'pro'}[provider]
+                    payload = {'name': 'Offline package check', 'provider': provider, 'chief': {'model': model, 'effort': '' if provider in ('opencode', 'antigravity') else 'medium'},
+                               'helpers': [{'id':'one', 'role':'implementer', 'name':'Implementation', 'model':model, 'effort': '' if provider in ('opencode', 'antigravity') else 'medium'}],
                                'concurrency':1, 'profile':'balanced'}
                     preview = request('/api/preview', {'project_ids':[ident], 'provider':provider, 'payload':payload}, csrf)['results'][0]
                     self.assertTrue(preview['ok'], preview)

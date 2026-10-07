@@ -7,7 +7,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_REPOSITORY = 'https://github.com/metapak/ustam'
-PINS = {provider: (SOURCE_REPOSITORY, '84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b', 'engine-sources/' + provider)
+PINS = {provider: (SOURCE_REPOSITORY, 'ea008dabb758bd5377257c8c5d9936c045e9965c', 'engine-sources/' + provider)
         for provider in ('codex', 'claude', 'opencode', 'antigravity')}
 PREFIXES = ('.agents/', '.codex/', '.claude/', '.opencode/', '.antigravity/', 'scripts/', 'templates/', 'presets/')
 TOP = {'VERSION', 'LICENSE', 'NOTICE'}

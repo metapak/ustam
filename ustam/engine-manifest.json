@@ -2,7 +2,7 @@
   "closure": "All tracked runtime/instruction/template/preset/script trees; tests, docs, launchers and setup wrappers are not read by backend APIs.",
   "engines": {
     "antigravity": {
-      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
+      "commit": "ea008dabb758bd5377257c8c5d9936c045e9965c",
       "files": {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "NOTICE": "346a6b91dc15e79a09702e7adb693456fd150bfeaf8c4409d88ad059980a4dcf",
@@ -14,7 +14,7 @@
       "source_repository": "https://github.com/metapak/ustam"
     },
     "claude": {
-      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
+      "commit": "ea008dabb758bd5377257c8c5d9936c045e9965c",
       "files": {
         ".claude/.bounded-orchestrator/.gitignore": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
         ".claude/agents/acceptance-test-author.md": "bc91d4ae3bcb48d57489f857de56698378dc67d2bc7ea75aee717d375bb96771",
@@ -63,7 +63,7 @@
       "source_repository": "https://github.com/metapak/ustam"
     },
     "codex": {
-      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
+      "commit": "ea008dabb758bd5377257c8c5d9936c045e9965c",
       "files": {
         ".agents/skills/bounded-orchestrator-security-review/SKILL.md": "0c66ee5160b05d33d64857e4cf9e4a0e149938706fb8cd6e95f8bb08d1e48d8b",
         ".agents/skills/bounded-orchestrator-ui-design/SKILL.md": "7dfc170ca65ccbba4d477903232d14533842ceaf0b941d516dec7abbd24c3441",
@@ -105,7 +105,7 @@
         "scripts/console/index.html": "8ebd63f9db51aa08a13b405e81b06eabed77a88635859724fef12f1d92216957",
         "scripts/console/orchestra.svg": "93a713f5de47f227e599f615c9c5b9df51b35e0a1c7ccdab1bb9ad132b2070e3",
         "scripts/console/style.css": "0dcf7d6cab61e3b054e8cca788c09706bbacbc9b33244c5c17fc87d752b4aaef",
-        "scripts/dashboard.py": "e866af06c216b90a54cb50939acb1618fb6b0b2e4860ac86be33e5d72f9c7e9d",
+        "scripts/dashboard.py": "9e9317d9200f6ef76e246b723de3ea52bc1924a0022b5b18b57e818e7dae187c",
         "scripts/install.ps1": "60357a7685c69d079c1ec5737dc1ee2c29610f41c4af2eaad05ce0d78345f337",
         "scripts/install.py": "10016f328211eadb50487ae63a9cbb82e548522583cc4817a5c038cd2bf46833",
         "scripts/install.sh": "010bdb35819318563d3cc46a1a73066d4a86c9e427cb0c12c46da264c076d160",
@@ -120,7 +120,7 @@
       "source_repository": "https://github.com/metapak/ustam"
     },
     "opencode": {
-      "commit": "84b49bc2aa3dd1429eaa1ffcb5ccdc76acf6ac8b",
+      "commit": "ea008dabb758bd5377257c8c5d9936c045e9965c",
       "files": {
         ".opencode/.bounded-orchestrator/.gitignore": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
         ".opencode/.candidate/.gitignore": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",

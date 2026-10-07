@@ -22,7 +22,7 @@ FILES = ('engine-sources/antigravity/LICENSE', 'engine-sources/antigravity/NOTIC
          'docs/ustam-hub.md', 'docs/ustam-hub.tr.md',
          'docs/ustam-macos-local-install.md', 'docs/ustam-macos-local-install.tr.md', 'tests/test_ustam_packaging.py',
          'tests/test_ustam_adapters.py', 'tests/test_ustam_hub.py', 'tests/test_ustam_jobs.py',
-         'tests/test_ustam_protocol.py', 'tests/test_ustam_model_effort.py',
+         'tests/test_ustam_protocol.py', 'tests/test_ustam_model_effort.py', 'tests/test_ustam_codex_bridge.py',
          'tests/ustam_install_fixture.py', 'tests/ustam_claude_cli_fixture.py',
          'tests/ustam_model_effort_ui.cjs', 'tests/ustam_works_ui.cjs',
          'tests/test_ustam_lifecycle.py', 'tests/ustam_notice_locale_ui.cjs',
